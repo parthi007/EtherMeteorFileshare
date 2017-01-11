@@ -35,3 +35,6 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
+
+#exclude the node_module from NodeAPI. Run npm install after downloading the source code for the PfizerAPI folder.
+PfizerAPI/node_modules
