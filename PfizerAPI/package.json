@@ -1,0 +1,24 @@
+{
+  "name": "pfizerapi",
+  "version": "1.0.0",
+  "description": "Pfizer Poc Node API ",
+  "main": "index.js",
+  "scripts": {
+    "test": "NONE"
+  },
+  "keywords": [
+    "Pfizer"
+  ],
+  "author": "Ram",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "ipfs-api": "^12.1.2",
+    "mime": "^1.3.4",
+    "multer": "^1.2.1",
+    "solc": "^0.4.7",
+    "util": "^0.10.3",
+    "web3": "^0.17.0-beta"
+  }
+}

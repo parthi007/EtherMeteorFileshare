@@ -1,0 +1,122 @@
+<template name="components_admin">
+    <div class="panel panel-default panel-dapp">
+        <div class="panel-heading">
+            {{i18n 'dapp.components.admin.header'}}
+        </div>
+        <div class="panel-body">
+            {{#with TemplateVar.get 'state'}}
+                {{#if isError}}
+                    <div class="alert alert-warning">
+                        There was an error deploying your contract.
+                        The error was: "{{error}}".
+                    </div>
+                {{/if}}
+            
+                {{#if isMining}}
+                    <div class="alert alert-info">
+                        Your contract is being mined...
+                        <span class="badge text-right">
+                            <i class="fa fa-cog fa-spin"></i>
+                        </span>
+                    </div>
+                {{/if}}
+            
+                {{#if isMined}}
+                    <div class="alert alert-success">
+                        Your User Access Control Contract has been mined!
+                    </div>
+            
+                    <hr />
+            
+                    <label>
+                        Your contract has been deployed to this address:
+                    </label>
+            
+                    <input type="text" class="form-control" 
+                           value="{{address}}" placeholder="Address" />
+            
+                    <br />
+            	{{/if}}
+
+                 {{#if inProcess}}
+                    <div class="alert alert-info">
+                        Address Addition in process....
+                    </div>
+            
+                    <hr />
+                {{/if}}
+
+                {{#if isAdded}}
+                    <div class="alert alert-success">
+                        You have successfully addhed the address!
+                    </div>
+            
+                    <hr />
+                {{/if}}
+
+                {{#if isAddFailed}}
+                    <div class="alert alert-warning">
+                        Address Addition Failed
+                    </div>
+            
+                    <hr />
+                {{/if}}
+
+                {{#if isAddedError}}
+                    <div class="alert alert-warning">
+                       User Registration failed! Please try again with a different user name!
+                    </div> 
+                {{/if}}
+            {{/with}}
+
+	<div class="row">
+        <div class="col-md-12">
+            <form class="form-horizontal">
+				<div class="form-group">
+    				<label for="userName" class="col-sm-3 control-label">Admin User Name</label>
+    				<div class="col-sm-4">
+    					<input type="text" id="userName" class="form-control" value="" placeholder="User Name" />
+    				</div>
+    			 </div>
+
+    			<div class="form-group">
+    				<label for="password" class="col-sm-3 control-label">Admin Password</label>
+    				<div class="col-sm-4">
+    					<input type="password" id="password" class="form-control" value="" placeholder="Password" />
+    				</div>
+    	
+    			</div>
+
+    			<div class="form-group">
+    				<div class="col-sm-4">
+    				<button type="button" id="createbtn" style="position: relative;top: 10px;left: 90%;" class="btn btn-info 							btn-deploy">{{i18n 'dapp.components.admin.create'}}
+    				</button>
+    				</div>
+    			</div>
+                <hr>
+                <hr>
+                <div class="form-group">
+                    <label for="userName" class="col-sm-3 control-label">Node Address</label>
+                    <div class="col-sm-4">
+                        <input type="text" id="nodeAddress" class="form-control" value="" placeholder="Address" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-4">
+                    <button type="button" id="addPatient" style="position: relative;top: 10px;left: 90%;" class="btn btn-info                            btn-deploy">Add Patient Address
+                    </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                     <div class="col-sm-4">
+                        <button type="button" id="addProvider" style="position: relative;top: 10px;left: 90%;" class="btn btn-info                            btn-deploy">Add Provider Address
+                    </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+    </div>
+</template>
