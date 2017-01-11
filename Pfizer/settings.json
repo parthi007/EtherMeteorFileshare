@@ -2,7 +2,7 @@
     "production": {
         "geth": {
             "rpc": "",
-            "rpcaddr": "localhost",
+            "rpcaddr": "0.0.0.0",
             "rpcport": 8001,
             "rpccorsdomain": "*",
             "unlock": 0,
