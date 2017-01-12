@@ -1,0 +1,23 @@
+<template name="components_addresslist">
+    <div class="panel panel-default panel-dapp">
+		<div class="table-responsive">
+            <table class="table table-bordered">
+            <thead>
+            <tr>
+                 <td>Address</td>
+            </tr>
+            </thead>
+            <tbody>
+                    {{#each getAddressList}}
+                    <tr>
+                        <td>
+                            {{ nodeAddress }}
+                        </td>
+                      </tr>
+                    {{/each}}
+                </tbody>
+            	</table>
+        </div>
+
+        </div>
+</template>

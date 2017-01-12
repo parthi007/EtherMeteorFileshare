@@ -1,7 +1,7 @@
 #!/bin/sh 
-Terminaltitle="Pfizer Service API"
+Terminaltitle="HealthApp API"
 echo -e '\033]2;'$Terminaltitle'\007'
-echo "Starting pfizer api"
-cd PfizerAPI  
+echo "Starting HealthApp api"
+cd HealthAppAPI  
 DEBUG=express:* node index.js
  
