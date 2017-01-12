@@ -2,7 +2,7 @@
     "app": {
         "loading": "Loading...",
         "offline": "Can't connect are you offline?",
-        "logginIn": "Logging in..."
+        "logginIn": "Logging in...."
     },
     "error": {
         "insufficientRights": "You don't have enough rights for this action."
