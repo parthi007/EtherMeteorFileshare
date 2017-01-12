@@ -1,6 +1,11 @@
 {
 	"dapp": {
-		"app": {
+		"ethereum":{
+			"contractaddress": ""
+			,"ethereumweb3url": ""
+			,"hostedpublicip": ""
+		}
+		,"app": {
 			"title": "HealthApp Data transfer ÐApp"
 			, "buttons": {
 				"view1": "Dashboard"
