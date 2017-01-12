@@ -1,5 +1,11 @@
-{
-    "production": {
+{   
+    "public": {
+        "ethereum":{
+            "contractaddress": "0x4300ffc8bc277d15b70971d19f83124ceb91003e"
+            ,"ethereumweb3url": "http://localhost:8001"
+            ,"hostedpublicip": "127.0.0.1"
+        }
+        ,
         "geth": {
             "rpc": "",
             "rpcaddr": "0.0.0.0",
@@ -14,23 +20,5 @@
             "networkid": 1234,
             "maxpeers": 0
         }
-    },
-    "development": {
-        "geth": {
-            "rpc": "",
-            "rpcaddr": "localhost",
-            "rpcport": 8001,
-            "rpccorsdomain": "*",
-            "genesis": "test-genesis.json",
-            "verbosity": 5,
-            "unlock": 0,
-            "etherbase": 0,
-            "mine": "",
-            "nodiscover": "",
-            "networkid": 1234,
-            "maxpeers": 0
-        },
-        "name": "Boilerplate"
-    },
-    "public": {}
+    }
 }

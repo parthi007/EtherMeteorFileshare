@@ -2,14 +2,14 @@
 // disconnect any meteor server
 if(location.host !== 'localhost:3000' 
    && location.host !== '127.0.0.1:3000'
-   && location.host != '52.176.46.175:3000'	 
+   && location.host != 	 Meteor.settings.public.ethereum.hostedpublicip
    && typeof MochaWeb === 'undefined')
     Meteor.disconnect();
 
 
 //Global variables
-useraccesscontractaddr = TAPi18n.__("dapp.ethereum.contractaddress");;
-shareFileContractAddr = "0x4300ffc8bc277d15b70971d19f83124ceb91003e";
+useraccesscontractaddr = Meteor.settings.public.ethereum.contractaddress;
+shareFileContractAddr = Meteor.settings.public.ethereum.contractaddress;
 
 // Set the default unit to ether
 if(!LocalStore.get('etherUnit'))
@@ -28,7 +28,7 @@ Meteor.startup(function() {
 
 
     if(!web3.currentProvider)
-        web3.setProvider(new web3.providers.HttpProvider("http://52.176.46.175:8001"));
+        web3.setProvider(new web3.providers.HttpProvider(Meteor.settings.public.ethereum.ethereumweb3url));
     
     // Setup EthAccounts
     EthAccounts.init();

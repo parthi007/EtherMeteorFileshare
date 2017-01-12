@@ -1,7 +1,7 @@
 {
-  "name": "pfizerapi",
+  "name": "healthappapi",
   "version": "1.0.0",
-  "description": "Pfizer Poc Node API ",
+  "description": "Poc Node API ",
   "main": "index.js",
   "scripts": {
     "test": "NONE"

@@ -1,0 +1,4 @@
+config/prod.json
+
+#exclude the node_module from NodeAPI. Run npm install after downloading the source code for the PfizerAPI folder.
+node_modules

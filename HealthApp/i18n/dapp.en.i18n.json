@@ -1,11 +1,6 @@
 {
 	"dapp": {
-		"ethereum":{
-			"contractaddress": "0x4300ffc8bc277d15b70971d19f83124ceb91003e"
-			,"ethereumweb3url": "http://52.176.46.175:8001"
-			,"hostedpublicip": "52.176.46.175"
-		}
-		,"app": {
+		"app": {
 			"title": "HealthApp Data transfer ÐApp"
 			, "buttons": {
 				"view1": "Dashboard"
