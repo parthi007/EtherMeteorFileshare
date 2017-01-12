@@ -8,7 +8,7 @@ if(location.host !== 'localhost:3000'
 
 
 //Global variables
-useraccesscontractaddr = "0x4300ffc8bc277d15b70971d19f83124ceb91003e";
+useraccesscontractaddr = TAPi18n.__("dapp.ethereum.contractaddress");;
 shareFileContractAddr = "0x4300ffc8bc277d15b70971d19f83124ceb91003e";
 
 // Set the default unit to ether
