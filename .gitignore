@@ -38,3 +38,4 @@ jspm_packages
 
 #exclude the node_module from NodeAPI. Run npm install after downloading the source code for the PfizerAPI folder.
 PfizerAPI/node_modules
+HealthAppAPI/node_modules
