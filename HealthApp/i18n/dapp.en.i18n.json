@@ -1,7 +1,7 @@
 {
 	"dapp": {
 		"app": {
-			"title": "HealthApp Data Transfer ÐApp"
+			"title": "HealthApp Data transfer ÐApp"
 			, "buttons": {
 				"view1": "Dashboard"
 				, "view2": "Manage Health App Data"
