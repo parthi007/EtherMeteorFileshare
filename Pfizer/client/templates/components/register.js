@@ -10,7 +10,7 @@ Template['components_register'].events({
 		
 		var transactionObject = {
 				data: UserAccessControlContract.bytecode, 
-		            	from: web3.eth.accounts[0],
+		            	from: web3.eth.coinbase,
 			    	gasPrice: web3.eth.gasPrice,
             			gas: 500000
 	        };

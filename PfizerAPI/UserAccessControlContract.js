@@ -12,6 +12,6 @@ return [{"constant":false,"inputs":[{"name":"FileId","type":"uint256"},{"name":"
 
 exports.ContractAddress = function()
 {
-	return "0x997bb61bade63e79467915d065862d9734a3502e";
+	return "0x4300ffc8bc277d15b70971d19f83124ceb91003e";
 }
 

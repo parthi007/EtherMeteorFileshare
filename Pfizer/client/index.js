@@ -8,8 +8,8 @@ if(location.host !== 'localhost:3000'
 
 
 //Global variables
-useraccesscontractaddr = "0x997bb61bade63e79467915d065862d9734a3502e";
-shareFileContractAddr = "0x997bb61bade63e79467915d065862d9734a3502e";
+useraccesscontractaddr = "0x4300ffc8bc277d15b70971d19f83124ceb91003e";
+shareFileContractAddr = "0x4300ffc8bc277d15b70971d19f83124ceb91003e";
 
 // Set the default unit to ether
 if(!LocalStore.get('etherUnit'))
