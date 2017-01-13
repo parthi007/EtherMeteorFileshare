@@ -27,7 +27,7 @@ Template['components_shareFile'].helpers({
 
 	'getUploadedFiles': function(){
 
-		web3.eth.defaultAccount = web3.eth.coinbase;
+		web3.eth.defaultAccount = web3.eth.accounts[1];
 		var fileIndex = 0;
 		var filecontent,fileName;
 		var fileArr = new Array();
