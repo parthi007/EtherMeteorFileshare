@@ -124,7 +124,7 @@ app.post('/register',jsonparser,function(req,res){
 });
 
 app.post('/login',jsonparser,function(req,res,next){
-
+      console.log("Login is called")
       var username = req.body.userName;
       var password = req.body.password;
       var senderAddress = req.body.address;
@@ -175,54 +175,54 @@ app.post('/login',jsonparser,function(req,res,next){
 });
 
 app.post('/upload',upload.single('uploadfile'),function (req,res) {
-	
-	var fileHash, fileName;
-	fileName = req.file.originalname;
+  
+  var fileHash, fileName;
+  fileName = req.file.originalname;
   var senderAddress = req.body.address;
 
-	ipfs.util.addFromFs(path.join(__dirname,'imagesPath',fileName),(err, result)=>{
-	if (err) {
-	   // res.end(err.toString())
+  ipfs.util.addFromFs(path.join(__dirname,'imagesPath',fileName),(err, result)=>{
+  if (err) {
+     // res.end(err.toString())
      throw err;
-	}
-	fileHash = result[0].hash;
+  }
+  fileHash = result[0].hash;
   fs.unlinkSync('./imagesPath/' + fileName);
-	var transactionObject = {
+  var transactionObject = {
             data: bytecode, 
             from: senderAddress,
             gasPrice: web3.eth.gasPrice,
             gas: 5000000
     };
   
-	web3.eth.estimateGas(transactionObject, function(err, estimateGas){
-	if(!err)
-	{
-	    transactionObject.gas = estimateGas * 20;
-	    contractInstance.UploadFile.sendTransaction(fileHash,fileName,transactionObject, function(err,result){
-	    if(err){
-	        console.log(err)
+  web3.eth.estimateGas(transactionObject, function(err, estimateGas){
+  if(!err)
+  {
+      transactionObject.gas = estimateGas * 10;
+      contractInstance.UploadFile.sendTransaction(fileHash,fileName,transactionObject, function(err,result){
+      if(err){
+          console.log(err)
           res.end(err.toString())
-	    }
-	    else
-	    {
-	        var loggedEvent = contractInstance.FileUploaded();
-         	loggedEvent.watch(function(error, result) {
+      }
+      else
+      {
+          var loggedEvent = contractInstance.FileUploaded();
+          loggedEvent.watch(function(error, result) {
           if(result.args.uploaded) {
             loggedEvent.stopWatching();
             res.end();
-	        }
-	        else{
-	          loggedEvent.stopWatching();
+          }
+          else{
+            loggedEvent.stopWatching();
             res.json({error:"Error Uploading File"})
             res.end("Upload Failed")
-	        }
-	        });
-	    }
+          }
+          });
+      }
 
-	    })
+      })
   }})
 
-	})
+  })
 });
 
 app.get('/GetFile', function(req,res){
