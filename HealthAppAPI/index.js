@@ -16,7 +16,7 @@ var contract = require('./UserAccessControlContract.js')
 
 process.on('uncaughtException', function (err) {
   console.error(err.stack);
-  console.log("Node NOT Exiting...");
+  console.log("Node NOT Exiting...");  
 });
 
 
@@ -61,16 +61,30 @@ app.get('/register',function (req,res){
     	}
     	else
     	{
-	    if(result[2] > 0)
-			{
-				patient = result[0][0];
-			}
-			if(result[3] > 0)
-			{
-				provider = result[1][0];
-			}
+  	    if(result[2] > 0)
+  			{
+  				patient = result[0][0];
+  			}
+  			if(result[3] > 0)
+  			{
+  				provider = result[1][0];
+  			}        
     		res.json({patientAddress:patient, providerAddress:provider});
     	}
+});
+
+app.get('/loginlogs',function (req,res){
+
+    var loginEvents = contractInstance.UserAuthenticated({fromBlock: 0});
+
+    loginEvents.watch(function(err,result){
+      if(err){
+        console.log(err);
+        return;
+      }
+
+      console.log("Loginlogs" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);
+    });
 });
 
 app.post('/register',jsonparser,function(req,res){
@@ -87,13 +101,13 @@ app.post('/register',jsonparser,function(req,res){
             gas: 500000
       };
         web3.eth.estimateGas(transactionObject, function(err, estimateGas){
-        if(!err)
+        if(!err)          
           transactionObject.gas = estimateGas * 10;
           contractInstance.Register.sendTransaction(username, password,roleCd,senderAddress,transactionObject, function(err,result){
 
           if(err){
             console.log(err)
-            res.end(err.toString())
+            res.status(500).send(err.toString());            
           }
           else
           {
@@ -103,7 +117,7 @@ app.post('/register',jsonparser,function(req,res){
             {
                 console.log(error.toString())
                 loggedEvent.stopWatching();
-                res.end(error.toString())
+                res.status(500).send(error.toString());
                
             }
             else
@@ -114,8 +128,7 @@ app.post('/register',jsonparser,function(req,res){
               }
               else{
                 loggedEvent.stopWatching();
-                res.end("Registration Failed")
-                
+                res.status(400).send("Registration Failed");
               }
             }
             })
@@ -123,48 +136,73 @@ app.post('/register',jsonparser,function(req,res){
         });
 });
 
-app.post('/login',jsonparser,function(req,res,next){
-      console.log("Login is called")
+app.post('/login',jsonparser,function(req,res,next){      
+      console.log("Login is called" + Date.now());
       var username = req.body.userName;
       var password = req.body.password;
       var senderAddress = req.body.address;
+      var blocknumber = web3.eth.getBlock('latest').number;
+
+      console.log("Login parameters,Username:" + username + ",password:" + password)
 
       var transactionObject = {
             data: bytecode, 
             from: senderAddress,
             gasPrice: web3.eth.gasPrice,
-            gas: 500000
+            gas: 5000000
       };
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
       if(!err)
+      {
           transactionObject.gas = estimateGas * 10;
+      }
+      else
+      {
+        console.log("Login gas error:" + err.toString());
+         if(err.toString()=="Error: Out of gas")
+         {
+            console.log("Inside low gas. Attemping to increase ");
+            transactionObject.gas = estimateGas * 100;
+         }
+         else(err.toString()=="Error: Exceeds block gas limit")
+         {
+            transactionObject.gas = estimateGas / 10;
+         }
+      }
           contractInstance.Login.sendTransaction(username, password,senderAddress,transactionObject, function(err,result){
           if(err){
             console.log(err)
-            res.end(err.toString())
+            res.status(500).send(err.toString());
           }
           else
           {
-            var loggedEvent = contractInstance.UserAuthenticated();
-            loggedEvent.watch(function(error, result) {
+            var loggedEvent = contractInstance.UserAuthenticated({_from: senderAddress});
+            loggedEvent.watch(function(error, result) {            
             if (error) {
                 console.log(error.toString())
-                res.end(error.toString())
+                res.status(500).send(error.toString());
 
             }
             else
             {
-              if(result.args.authenticated) {
-                loggedEvent.stopWatching();
-                res.json({role:result.args.roleCd, address:senderAddress})
-                res.end()
-              }
-              else{
-                loggedEvent.stopWatching();
-                res.json({error:"Error Logging in."})
-                res.end();
-              }
-                
+              if(result.blockNumber > blocknumber){
+                if(result.args.authenticated) {                                                                
+                  console.log("Authenticated:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                
+                  if(result.args.userAddress == senderAddress)
+                  {
+                    loggedEvent.stopWatching();
+                    res.json({role:result.args.roleCd, address:result.args.userAddress})
+                    res.end()
+                  }
+                }
+                else{
+                  console.log("Authentication failes:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                
+                  if(result.args.userAddress == senderAddress){
+                    loggedEvent.stopWatching();                
+                    res.status(401).send("Authencation failed");
+                  }
+                }
+              }                
             }
 
             })
@@ -201,7 +239,7 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
       contractInstance.UploadFile.sendTransaction(fileHash,fileName,transactionObject, function(err,result){
       if(err){
           console.log(err)
-          res.end(err.toString())
+          res.status(500).send(err.toString());
       }
       else
       {
@@ -213,8 +251,7 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
           }
           else{
             loggedEvent.stopWatching();
-            res.json({error:"Error Uploading File"})
-            res.end("Upload Failed")
+            res.status(500).send("Error Uploading File");
           }
           });
       }
@@ -245,7 +282,7 @@ var filePath = path.join(__dirname, 'downloads',filename);
 
   if (err) {
      console.log(err.toString());
-     res.end(err.toString())
+     res.status(500).send(err.toString());     
   }
   var mimetype = mime.lookup(filePath);
   var writedoc = fs.createWriteStream(filePath,{'flags':'a'});
@@ -261,7 +298,7 @@ var filePath = path.join(__dirname, 'downloads',filename);
   stream.on('error', function (err) {
     fs.unlinkSync(filePath);
     console.error('Error downloading file', err)
-    res.json({error:err})
+    res.status(500).send(err.toString());    
   })
 
   stream.on('end', function () {
@@ -289,8 +326,7 @@ app.get('/share/GetProviders',function(req,res)
 	}
 	else
   {
-    res.json({error:"No providers registered"})
-		res.end();
+    res.status(400).send("No providers registered");    
   }
 });
 
@@ -371,6 +407,7 @@ app.get('/Provider/GetFiles',jsonparser,function(req,res)
       sharedFileInfo = {id:FileId, name:fileName, owner:owner, hash: fileHash};
       sharedFileArr.push(sharedFileInfo);
     }
+    console.log("GetFiles response:" + providerFiles);
     res.json({Files:sharedFileArr});
 });
 
@@ -416,12 +453,12 @@ app.post('/share',jsonparser,function(req,res){
 
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
         if(!err)
-          transactionObject.gas = estimateGas * 20;
+          transactionObject.gas = estimateGas * 10;
           contractInstance.ShareFiles.sendTransaction(ownerAddress,providerAddress,fileId,fileName,transactionObject, function(err,result){
 
           if(err){
             console.log(err)
-            res.end(err.toString())
+            res.status(500).send(err.toString()); 
           }
           else
           {
@@ -429,7 +466,7 @@ app.post('/share',jsonparser,function(req,res){
             loggedEvent.watch(function(error, result) {
             if (error) {
               console.log(error.toString())
-              res.end(error.toString())
+              res.status(500).send(error.toString()); 
             }
             else
             {
@@ -465,13 +502,13 @@ app.post('/delete',jsonparser,function(req,res){
 
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
         if(!err)
-          transactionObject.gas = estimateGas * 20;
+          transactionObject.gas = estimateGas * 10;
           
           contractInstance.RemoveFile.sendTransaction(fileId,ownerAddress,transactionObject, function(err,result){
 
           if(err){
             console.log(err)
-             res.json({error:err})
+            res.status(500).send(err.toString()); 
           }
           else
           {
@@ -479,7 +516,7 @@ app.post('/delete',jsonparser,function(req,res){
             loggedEvent.watch(function(error, result) {
             if (error) {
               console.log(error.toString())
-              res.json({error:error})
+              res.status(500).send(error.toString()); 
             }
             else
             {
@@ -491,7 +528,7 @@ app.post('/delete',jsonparser,function(req,res){
               else{
                 loggedEvent.stopWatching();
                 console.log("error deleting")
-                res.json({error:"Error Deleting file."})
+                res.status(400).send("Error Deleting file.");                 
               }
               
             }
@@ -520,36 +557,36 @@ app.post('/revoke',jsonparser,function(req,res){
 
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
         if(!err)
-          transactionObject.gas = estimateGas * 20;
-      	
+          transactionObject.gas = estimateGas * 10;
+      	console.log("RevokeFileaccess is to called");
         contractInstance.RevokeFileAccess.sendTransaction(ownerAddress,fileId,fileName,providerAddress,transactionObject, function(err,result){
 
           if(err){
             console.log(err)
-            res.json({error:err})
-            res.end(err.toString())
+            //res.json({error:err})            
+            res.status(500).send(err.toString());
           }
           else
           {
+            
             var loggedEvent = contractInstance.FileAccessRevoked();
             loggedEvent.watch(function(error, result) {
+              console.log("Fileaccessrovoked >> Watch the loggedEvent");
               if (error) {
-                console.log(error.toString())
-                res.json({error:err})
-                res.end();
+                console.log(error.toString());
+                res.status(500).send(error.toString());
               }
               else
-              {
+              {                
                 if(result.args.fileName.length > 0) {
                   loggedEvent.stopWatching();
-                  res.end()
+                  res.end();
                 }
                 else{
                   loggedEvent.stopWatching();
-                  res.json({error:"Error revoking file access."})
-                  res.end();
-                }
-                
+                  console.log("There are no files to revoke access");
+                  res.status(500).send("Error revoking file access.");
+                }                
               }
 
               });

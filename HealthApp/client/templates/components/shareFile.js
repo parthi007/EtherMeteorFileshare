@@ -7,7 +7,7 @@ Template['components_shareFile'].onRendered( function(){
 	web3.eth.defaultAccount = web3.eth.coinbase;
            
 	shareFilecontractInstance = web3.eth.contract(UserAccessControlContract.abi).at(shareFileContractAddr);
-	shareFilecontractInstance.getUserFileCount.call(web3.eth.accounts[1], function(err,fileCount)
+	shareFilecontractInstance.getUserFileCount.call(we2achirsub3.eth.accounts[1], function(err,fileCount)
 	{
 		if(err)
 		{
