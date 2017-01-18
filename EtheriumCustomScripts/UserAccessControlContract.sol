@@ -1,3 +1,4 @@
+pragma solidity ^0.4.0;
 contract UserAccessControlContract {
 
 	enum Roles {None,Admin,Participant,Provider} 
@@ -49,6 +50,7 @@ contract UserAccessControlContract {
 	mapping (uint => SharedFile) public sharedFiles;
 	mapping (uint => RoleAddress) public availAddresses;
 
+
 	Roles public role;
 
 	function UserAccessControlContract(string username, string password) {
@@ -58,33 +60,50 @@ contract UserAccessControlContract {
 	}
 
 	function ResetContract(){
+		
+        //to clear a mapping hashtable in solidity
+        for(uint i=0;i<numFiles;i++)
+		{
+		    delete uploadedFiles[i];	
+		}
+		
+		for(i=0;i<numUsers;i++)
+		{
+		    delete users[useraccounts[i].userAddress];
+		    delete useraccounts[i];
+		}
+        
+        for(i=0;i<sharedFileIndex;i++)
+		{
+		    delete sharedFiles[i];	
+		}
+        
+        for(i=0;i<addressCount;i++)
+		{
+		    delete availAddresses[i];	
+		}
+		
 		numUsers=0;
 		numFiles=0;
 		sharedFileIndex=0;
 		addressCount=0;
-
-		uploadedFiles.length=0;
-		users.length=0;
-		useraccounts.length=0;
-		sharedFiles.length=0;
-		availAddresses.length=0;
-
-
-		users["0x922debc000dd9303a3e47be7127498329f598029"] = UserAccount("0x922debc000dd9303a3e47be7127498329f598029", "admin", "admin", Roles.Admin);
-		useraccounts[numUsers] = users[msg.sender];
+	
+	
+		users[0x922debc000dd9303a3e47be7127498329f598029] = UserAccount(0x922debc000dd9303a3e47be7127498329f598029, "admin", "admin", Roles.Admin);
+		useraccounts[numUsers] = users[0x922debc000dd9303a3e47be7127498329f598029];
 		numUsers++;
 
-		AddAddress("0x9130b6ae79c363f101f419811433ca5dbba7ee7b",Roles.Participant);
-		AddAddress("0xb490511d508990feb70513f9f39d2280c41699b5",Roles.Participant);
-		AddAddress("0x81adbc2fb0ea19ba61e93dc5ef9864c0497ea2b1",Roles.Participant);
-		AddAddress("0x39bddda10dc121d7cc7ff97186b6f0d382206eac",Roles.Participant);
-		AddAddress("0x3b5a64d9886e4df7fe99b3289032378895fb6bf7",Roles.Participant);
+		AddAddress(0x9130b6ae79c363f101f419811433ca5dbba7ee7b,Roles.Participant);
+		AddAddress(0xb490511d508990feb70513f9f39d2280c41699b5,Roles.Participant);
+		AddAddress(0x81adbc2fb0ea19ba61e93dc5ef9864c0497ea2b1,Roles.Participant);
+		AddAddress(0x39bddda10dc121d7cc7ff97186b6f0d382206eac,Roles.Participant);
+		AddAddress(0x3b5a64d9886e4df7fe99b3289032378895fb6bf7,Roles.Participant);
 
-		AddAddress("0x4945d9c2e5ce6f0ced789c08602acad3071e621b",Roles.Provider);
-		AddAddress("0x2c58aa399dd93656da88adf3f8dc52ce99d45a58",Roles.Provider);
-		AddAddress("0x0fe0ac23d61d0d5e1b5ce29d79b277f455bfa3e2",Roles.Provider);
-		AddAddress("0x2545ff3db992f9cb830a6c634e50a111cff17662",Roles.Provider);
-		AddAddress("0x13141b3286030e0e6b218a5acbfb081342c36562",Roles.Provider);
+		AddAddress(0x4945d9c2e5ce6f0ced789c08602acad3071e621b,Roles.Provider);
+		AddAddress(0x2c58aa399dd93656da88adf3f8dc52ce99d45a58,Roles.Provider);
+		AddAddress(0x0fe0ac23d61d0d5e1b5ce29d79b277f455bfa3e2,Roles.Provider);
+		AddAddress(0x2545ff3db992f9cb830a6c634e50a111cff17662,Roles.Provider);
+		AddAddress(0x13141b3286030e0e6b218a5acbfb081342c36562,Roles.Provider);
 
 	}
 
@@ -461,4 +480,3 @@ contract UserAccessControlContract {
         throw;
     }
 }
-

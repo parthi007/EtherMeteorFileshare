@@ -213,53 +213,62 @@ app.post('/login',jsonparser,function(req,res,next){
 });
 
 app.post('/upload',upload.single('uploadfile'),function (req,res) {
-  
-  var fileHash, fileName;
-  fileName = req.file.originalname;
-  var senderAddress = req.body.address;
 
-  ipfs.util.addFromFs(path.join(__dirname,'imagesPath',fileName),(err, result)=>{
-  if (err) {
-     // res.end(err.toString())
-     throw err;
+  try{
+
+    var fileHash, fileName;
+    fileName = req.file.originalname;
+    var senderAddress = req.body.address;
+
+    ipfs.util.addFromFs(path.join(__dirname,'imagesPath',fileName),(err, result)=>{
+    if (err) {
+       // res.end(err.toString())       
+       console.log("Upload file error:" + err);
+       res.status(500).send(err); 
+    }
+    fileHash = result[0].hash;
+    fs.unlinkSync('./imagesPath/' + fileName);
+    var transactionObject = {
+              data: bytecode, 
+              from: senderAddress,
+              gasPrice: web3.eth.gasPrice,
+              gas: 5000000
+      };
+    
+    web3.eth.estimateGas(transactionObject, function(err, estimateGas){
+    if(!err)
+    {
+        transactionObject.gas = estimateGas * 10;
+        contractInstance.UploadFile.sendTransaction(fileHash,fileName,transactionObject, function(err,result){
+        if(err){
+            console.log(err)
+            res.status(500).send(err.toString());
+        }
+        else
+        {
+            var loggedEvent = contractInstance.FileUploaded();
+            loggedEvent.watch(function(error, result) {
+            if(result.args.uploaded) {
+              loggedEvent.stopWatching();
+              res.end();
+            }
+            else{
+              loggedEvent.stopWatching();
+              res.status(500).send("Error Uploading File");
+            }
+            });
+        }
+
+        })
+    }})
+
+    });
   }
-  fileHash = result[0].hash;
-  fs.unlinkSync('./imagesPath/' + fileName);
-  var transactionObject = {
-            data: bytecode, 
-            from: senderAddress,
-            gasPrice: web3.eth.gasPrice,
-            gas: 5000000
-    };
+  catch (ex){
+    console.log("Upload file error:" + ex);
+    res.status(500).send(ex); 
+  }
   
-  web3.eth.estimateGas(transactionObject, function(err, estimateGas){
-  if(!err)
-  {
-      transactionObject.gas = estimateGas * 10;
-      contractInstance.UploadFile.sendTransaction(fileHash,fileName,transactionObject, function(err,result){
-      if(err){
-          console.log(err)
-          res.status(500).send(err.toString());
-      }
-      else
-      {
-          var loggedEvent = contractInstance.FileUploaded();
-          loggedEvent.watch(function(error, result) {
-          if(result.args.uploaded) {
-            loggedEvent.stopWatching();
-            res.end();
-          }
-          else{
-            loggedEvent.stopWatching();
-            res.status(500).send("Error Uploading File");
-          }
-          });
-      }
-
-      })
-  }})
-
-  })
 });
 
 app.get('/GetFile', function(req,res){
@@ -330,6 +339,36 @@ app.get('/share/GetProviders',function(req,res)
   }
 });
 
+app.get('/ResetContract',function(req,res)
+{
+
+
+  var transactionObject = {
+            data: bytecode,
+            from: web3.eth.coinbase,
+            gasPrice: web3.eth.gasPrice,
+            gas: 5000000
+      };
+
+  web3.eth.estimateGas(transactionObject, function(err, estimateGas){
+    if(!err)
+      transactionObject.gas = estimateGas * 10;
+      contractInstance.ResetContract.sendTransaction(transactionObject, function(err,result){
+
+        if(err){
+          console.log("reset failed:" + err);
+          res.status(500).send(err.toString()); 
+        }
+        else{
+          
+          console.log("Reset is triggerred");
+          res.status(200).send("Reset is triggerred");
+        }
+      });
+  });  
+
+});
+
 app.get('/share/GetAllFiles',jsonparser,function(req,res)
 {
 	var address = req.query.address;
@@ -386,19 +425,25 @@ app.get('/share/GetAllFiles',jsonparser,function(req,res)
 
 app.get('/Provider/GetFiles',jsonparser,function(req,res)
 {
+  try
+  {
     var FileId;
     var FileIndex = 0;
     var fileName,fileHash;
     var owner;
     var sharedFileArr = new Array();
     var sharedFileInfo;
-
+    console.log("Request query address :" + req.query.address)
     var address = req.query.address;
 
     var providerFiles = contractInstance.GetProviderFileCount.call(address);  
+    
+    console.log("ProvidersFileCount response:" + providerFiles);
+
     for(var i=0; i<providerFiles;i++)
     {
       var result = contractInstance.GetProviderFiles.call(address,FileIndex); 
+      console.log("GetProviderFiles response:" + result[0]);
       FileId = result[0];
       fileName = result[1];
       owner = result[2];
@@ -407,8 +452,14 @@ app.get('/Provider/GetFiles',jsonparser,function(req,res)
       sharedFileInfo = {id:FileId, name:fileName, owner:owner, hash: fileHash};
       sharedFileArr.push(sharedFileInfo);
     }
-    console.log("GetFiles response:" + providerFiles);
+    
     res.json({Files:sharedFileArr});
+  }
+  catch (ex){
+    console.log ("Exception in Getfiles method:" + ex);
+    res.status(500).send(ex); 
+  }
+
 });
 
 app.get('/share/GetRevokedFiles',jsonparser,function(req,res)
