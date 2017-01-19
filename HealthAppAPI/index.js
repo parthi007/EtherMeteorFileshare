@@ -12,7 +12,17 @@ var app = express()
 var ipfs = ipfsAPI('/ip4/127.0.0.1/tcp/5001');
 var router = express.Router();
 var contract = require('./UserAccessControlContract.js')
+var config = require('config');
 
+//Simple implementation of logging to both console and log file by overwriting the console.log function.
+//For production implementation, use Winston.
+var log_file = fs.createWriteStream(config.get('logpath'), {flags : 'a'});
+var log_stdout = process.stdout;
+
+console.log = function(d) { //
+  log_file.write(util.format(d) + '\n');
+  log_stdout.write(util.format(d) + '\n');
+};
 
 process.on('uncaughtException', function (err) {
   console.error(err.stack);

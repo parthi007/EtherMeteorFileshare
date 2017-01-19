@@ -1,5 +1,6 @@
 config/prod.json
 downloads
+logs
 
 #exclude the node_module from NodeAPI. Run npm install after downloading the source code for the HealthAppAPI folder.
 #node_modules
