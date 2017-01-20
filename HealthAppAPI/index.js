@@ -18,7 +18,6 @@ var config = require('config');
 //For production implementation, use Winston.
 var log_file = fs.createWriteStream(config.get('logpath'), {flags : 'a'});
 var log_stdout = process.stdout;
-
 console.log = function(d) { //
   log_file.write(util.format(d) + '\n');
   log_stdout.write(util.format(d) + '\n');
@@ -28,6 +27,11 @@ process.on('uncaughtException', function (err) {
   console.error(err.stack);
   console.log("Node NOT Exiting...");  
 });
+
+
+//set defaults:
+var const_gas = 5000000;
+var const_gasMultiplierFactor = 1;
 
 
 if (typeof web3 !== 'undefined') {
@@ -108,11 +112,11 @@ app.post('/register',jsonparser,function(req,res){
             data: bytecode, 
             from: senderAddress,
             gasPrice: web3.eth.gasPrice,
-            gas: 500000
+            gas: const_gas
       };
         web3.eth.estimateGas(transactionObject, function(err, estimateGas){
         if(!err)          
-          transactionObject.gas = estimateGas * 10;
+          transactionObject.gas = estimateGas * const_gasMultiplierFactor;
           contractInstance.Register.sendTransaction(username, password,roleCd,senderAddress,transactionObject, function(err,result){
 
           if(err){
@@ -159,12 +163,12 @@ app.post('/login',jsonparser,function(req,res,next){
             data: bytecode, 
             from: senderAddress,
             gasPrice: web3.eth.gasPrice,
-            gas: 5000000
+            gas: const_gas
       };
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
       if(!err)
       {
-          transactionObject.gas = estimateGas * 10;
+          transactionObject.gas = estimateGas * const_gasMultiplierFactor;
       }
       else
       {
@@ -233,22 +237,25 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
     ipfs.util.addFromFs(path.join(__dirname,'imagesPath',fileName),(err, result)=>{
     if (err) {
        // res.end(err.toString())       
-       console.log("Upload file error:" + err);
+       console.log("Upload file error to IPFS:" + err);
        res.status(500).send(err); 
     }
+
+    console.log("successfully uploaded the file to IPFS");
+
     fileHash = result[0].hash;
     fs.unlinkSync('./imagesPath/' + fileName);
     var transactionObject = {
               data: bytecode, 
               from: senderAddress,
               gasPrice: web3.eth.gasPrice,
-              gas: 5000000
+              gas: const_gas
       };
     
     web3.eth.estimateGas(transactionObject, function(err, estimateGas){
     if(!err)
     {
-        transactionObject.gas = estimateGas * 10;
+        transactionObject.gas = estimateGas * const_gasMultiplierFactor;
         contractInstance.UploadFile.sendTransaction(fileHash,fileName,transactionObject, function(err,result){
         if(err){
             console.log(err)
@@ -258,14 +265,14 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
         {
             var loggedEvent = contractInstance.FileUploaded();
             loggedEvent.watch(function(error, result) {
-            if(result.args.uploaded) {
-              loggedEvent.stopWatching();
-              res.end();
-            }
-            else{
-              loggedEvent.stopWatching();
-              res.status(500).send("Error Uploading File");
-            }
+              if(result.args.uploaded) {
+                loggedEvent.stopWatching();
+                res.end();
+              }
+              else{
+                loggedEvent.stopWatching();
+                res.status(500).send("Error Uploading File");
+              }
             });
         }
 
@@ -357,12 +364,12 @@ app.get('/ResetContract',function(req,res)
             data: bytecode,
             from: web3.eth.coinbase,
             gasPrice: web3.eth.gasPrice,
-            gas: 5000000
+            gas: const_gas
       };
 
   web3.eth.estimateGas(transactionObject, function(err, estimateGas){
     if(!err)
-      transactionObject.gas = estimateGas * 10;
+      transactionObject.gas = estimateGas * const_gasMultiplierFactor;
       contractInstance.ResetContract.sendTransaction(transactionObject, function(err,result){
 
         if(err){
@@ -391,7 +398,7 @@ app.get('/share/GetAllFiles',jsonparser,function(req,res)
 	var sharedFileArr = new Array();
 	var FileId = 0;
 	var sharedFileInfo;
-	
+  	
 	var uploadedFileCount = contractInstance.getUserFileCount.call(address);
 	
 	for(var i=0; i<uploadedFileCount;i++)
@@ -452,15 +459,21 @@ app.get('/Provider/GetFiles',jsonparser,function(req,res)
 
     for(var i=0; i<providerFiles;i++)
     {
-      var result = contractInstance.GetProviderFiles.call(address,FileIndex); 
-      console.log("GetProviderFiles response:" + result[0]);
-      FileId = result[0];
-      fileName = result[1];
-      owner = result[2];
-      fileHash = result[3];
-      FileIndex = result[4]+1;
-      sharedFileInfo = {id:FileId, name:fileName, owner:owner, hash: fileHash};
-      sharedFileArr.push(sharedFileInfo);
+      try{
+        var result = contractInstance.GetProviderFiles.call(address,FileIndex); 
+        console.log("GetProviderFiles response:" + result[0]);
+        FileId = result[0];
+        fileName = result[1];
+        owner = result[2];
+        fileHash = result[3];
+        FileIndex = result[4]+1;
+        sharedFileInfo = {id:FileId, name:fileName, owner:owner, hash: fileHash};
+        sharedFileArr.push(sharedFileInfo);  
+      }
+      catch (ex){
+        console.log("Contract error GetProviderFiles:" + ex);
+      }
+
     }
     
     res.json({Files:sharedFileArr});
@@ -509,12 +522,12 @@ app.post('/share',jsonparser,function(req,res){
             data: bytecode,
             from: ownerAddress,
             gasPrice: web3.eth.gasPrice,
-            gas: 5000000
+            gas: const_gas
       };
 
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
         if(!err)
-          transactionObject.gas = estimateGas * 10;
+          transactionObject.gas = estimateGas * const_gasMultiplierFactor;
           contractInstance.ShareFiles.sendTransaction(ownerAddress,providerAddress,fileId,fileName,transactionObject, function(err,result){
 
           if(err){
@@ -533,11 +546,11 @@ app.post('/share',jsonparser,function(req,res){
             {
               if(result.args.FileName.length > 0) {
                 loggedEvent.stopWatching();
-                res.end()
+                res.status(200).send(result.args.FileName + " shared with " + result.args.userName);                
               }
               else{
                 loggedEvent.stopWatching();
-                res.end()
+                res.status(500).send("Returns no filename from contract");                
               }
               
             }
@@ -558,12 +571,12 @@ app.post('/delete',jsonparser,function(req,res){
             data: bytecode,
             from: ownerAddress,
             gasPrice: web3.eth.gasPrice,
-            gas: 5000000
+            gas: const_gas
       };
 
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
         if(!err)
-          transactionObject.gas = estimateGas * 10;
+          transactionObject.gas = estimateGas * const_gasMultiplierFactor;
           
           contractInstance.RemoveFile.sendTransaction(fileId,ownerAddress,transactionObject, function(err,result){
 
@@ -613,12 +626,12 @@ app.post('/revoke',jsonparser,function(req,res){
             data: bytecode,
             from: ownerAddress,
             gasPrice: web3.eth.gasPrice,
-            gas: 5000000
+            gas: const_gas
       };
 
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
         if(!err)
-          transactionObject.gas = estimateGas * 10;
+          transactionObject.gas = estimateGas * const_gasMultiplierFactor;
       	console.log("RevokeFileaccess is to called");
         contractInstance.RevokeFileAccess.sendTransaction(ownerAddress,fileId,fileName,providerAddress,transactionObject, function(err,result){
 

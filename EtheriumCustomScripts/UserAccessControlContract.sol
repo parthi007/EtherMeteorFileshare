@@ -40,10 +40,10 @@ contract UserAccessControlContract {
 	event FileDeleted(bool deleted);
 	event AddressAdded(bool added);
 
-	uint numUsers;
-	uint numFiles;
-	uint sharedFileIndex;
-	uint addressCount;
+	uint public numUsers;
+	uint public numFiles;
+	uint public sharedFileIndex;
+	uint public addressCount;
 	mapping (uint => FileDetails) public uploadedFiles;
 	mapping (address => UserAccount) public users;
 	mapping (uint => UserAccount) public useraccounts;
