@@ -197,17 +197,14 @@ contract UserAccessControlContract {
 					else
 					{
 						delete sharedFiles[fileIndex];
-						deleted = true;
-						--sharedFileIndex;
-						FileDeleted(deleted);
-						return deleted;
+						--sharedFileIndex;						
 					}
 				}
 			}
             delete uploadedFiles[FileId];
             --numFiles;
             deleted = true;
-		    FileDeleted(deleted);
+		    FileDeleted(deleted); 
 		    return deleted;
 		}   
 		else
