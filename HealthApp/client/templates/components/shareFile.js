@@ -27,7 +27,7 @@ Template['components_shareFile'].helpers({
 
 	'getUploadedFiles': function(){
 
-		web3.eth.defaultAccount = web3.eth.accounts[1];
+		web3.eth.defaultAccount = web3.eth.accounts[5];
 		var fileIndex = 0;
 		var filecontent,fileName;
 		var fileArr = new Array();
@@ -51,7 +51,7 @@ Template['components_shareFile'].helpers({
 	
 	'getSharedFileCount': function(){
 
-		web3.eth.defaultAccount = web3.eth.accounts[1];
+		web3.eth.defaultAccount = web3.eth.accounts[5];
            
 		shareFilecontractInstance = web3.eth.contract(UserAccessControlContract.abi).at(shareFileContractAddr);
 		var fileCount = shareFilecontractInstance.GetSharedFileCount.call(web3.eth.accounts[1]);
@@ -78,7 +78,7 @@ Template['components_shareFile'].helpers({
 		var sharedFileArr = new Array();
 		var sharedFileInfo;
 
-		web3.eth.defaultAccount = web3.eth.accounts[1];
+		web3.eth.defaultAccount = web3.eth.accounts[5];
 		shareFilecontractInstance = web3.eth.contract(UserAccessControlContract.abi).at(shareFileContractAddr);
 		//var sharedfiles = getSharedFileCount();
 		var sharedfiles = shareFilecontractInstance.GetProviderFileCount.call(web3.eth.accounts[1]);	
@@ -131,13 +131,14 @@ Template['components_shareFile'].helpers({
 		console.log(providerFiles);
 		for(var i=0; i<providerFiles;i++)
 		{
+			
 		var result = shareFilecontractInstance.GetProviderFiles.call(web3.eth.accounts[6],FileIndex);	
 				
 			FileId = result[0];
 			fileName = result[1];
 			owner = result[2];
 			fileHash = result[3];
-			FileIndex = result[4]+1;
+			FileIndex = parseInt(result[4])+1;
 			sharedFileInfo = {id:FileId, name:fileName, owner:owner, hash: fileHash};
 			sharedFileArr.push(sharedFileInfo);
 		}
@@ -154,12 +155,12 @@ Template['components_shareFile'].events({
 		var fName = template.find("#fileName").value;
 		var fHash = template.find("#fileHash").value;
 
-	        web3.eth.defaultAccount = web3.eth.accounts[1];
+	        web3.eth.defaultAccount = web3.eth.accounts[5];
 		shareFilecontractInstance = web3.eth.contract(UserAccessControlContract.abi).at(shareFileContractAddr);
 		
 		var transactionObject = {
 		            data: UserAccessControlContract.bytecode, 
-		            from: web3.eth.accounts[1],
+		            from: web3.eth.accounts[5],
 				gasPrice: web3.eth.gasPrice,
             			gas: 5000000
 	        };
@@ -217,12 +218,12 @@ Template['components_shareFile'].events({
 		var fileId = btnId.substring(5,index);
 		var fileName = btnId.substring(index+2,btnId.length);
 
-	        web3.eth.defaultAccount = web3.eth.accounts[1];
+	        web3.eth.defaultAccount = web3.eth.accounts[5];
 		shareFilecontractInstance = web3.eth.contract(UserAccessControlContract.abi).at(shareFileContractAddr);
 		
 		var transactionObject = {
 		            data: UserAccessControlContract.bytecode, 
-		            from: web3.eth.accounts[1],
+		            from: web3.eth.accounts[5],
 				gasPrice: web3.eth.gasPrice,
             			gas: 5000000
 	        };

@@ -400,10 +400,11 @@ app.get('/share/GetAllFiles',jsonparser,function(req,res)
 	var sharedFileInfo;
   	
 	var uploadedFileCount = contractInstance.getUserFileCount.call(address);
-	
+	console.log("uploadedFileCount" + uploadedFileCount);
+
 	for(var i=0; i<uploadedFileCount;i++)
 	{
-		var uploadedFiles = contractInstance.getFileDetails.call(fileIndex,address);					
+		var uploadedFiles = contractInstance.getFileDetails.call(fileIndex,address);					    
 		fileIndex = uploadedFiles[0];
 		filecontent = uploadedFiles[1];
 		fileName = uploadedFiles[2];
@@ -412,11 +413,13 @@ app.get('/share/GetAllFiles',jsonparser,function(req,res)
 	}
 	
 	var sharedFileCount = contractInstance.GetSharedFileCount.call(address);
+  console.log("sharedFileCount" + sharedFileCount);
 	for(var i=0; i<sharedFileCount;i++)
 	{
-		var sharedFiles = contractInstance.GetUserSharedFiles.call(sharedFileIndex,address);					
+		var sharedFiles = contractInstance.GetUserSharedFiles.call(sharedFileIndex,address);	
+    console.log("shared file details" + sharedFiles);				
 		FileId = sharedFiles[0];
-		shareFileIndex = sharedFiles[1];
+		sharedFileIndex = sharedFiles[1];
 		fileName = sharedFiles[2];
 		sharedProviderAddr = sharedFiles[3];
 		sharedProvider = sharedFiles[4];
@@ -424,10 +427,16 @@ app.get('/share/GetAllFiles',jsonparser,function(req,res)
 		sharedFileArr.push(sharedFileInfo);	
 	}
 
+
 	for(var count=0;count<fileArr.length;count++)
 	{
+    
 		for(var scount=0;scount<sharedFileArr.length;scount++)
 		{
+      console.log("Filelist name " + fileArr[count].name);
+      console.log("shared Filelist name " + sharedFileArr[scount].name);
+      console.log("sharedFileArr[scount].providerAddr " + sharedFileArr[scount].providerAddr);
+      
 			if(fileArr[count].id==sharedFileArr[scount].id && fileArr[count].name==sharedFileArr[scount].name)
 			{
 				fileArr[count].providerAddress = sharedFileArr[scount].providerAddr;
@@ -460,17 +469,19 @@ app.get('/Provider/GetFiles',jsonparser,function(req,res)
     for(var i=0; i<providerFiles;i++)
     {
       try{
-        var result = contractInstance.GetProviderFiles.call(address,FileIndex); 
-        console.log("GetProviderFiles response:" + result[0]);
+        var result = contractInstance.GetProviderFiles.call(address,FileIndex);
+        console.log("Getfiles:" + result);
+        console.log("GetProviderFiles response:" + result[0] + result[1] );
         FileId = result[0];
         fileName = result[1];
         owner = result[2];
         fileHash = result[3];
-        FileIndex = result[4]+1;
+        FileIndex = parseInt(result[4])+1;
         sharedFileInfo = {id:FileId, name:fileName, owner:owner, hash: fileHash};
         sharedFileArr.push(sharedFileInfo);  
       }
       catch (ex){
+        FileIndex++;
         console.log("Contract error GetProviderFiles:" + ex);
       }
 
@@ -562,6 +573,7 @@ app.post('/share',jsonparser,function(req,res){
       })
 });
 
+/*
 app.post('/delete',jsonparser,function(req,res){
 
       var ownerAddress = req.body.address;
@@ -613,7 +625,7 @@ app.post('/delete',jsonparser,function(req,res){
         })
       })
 });
-
+*/
 
 app.post('/revoke',jsonparser,function(req,res){
 
