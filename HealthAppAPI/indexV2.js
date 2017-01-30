@@ -11,8 +11,18 @@ var mime = require("mime");
 var app = express()
 var ipfs = ipfsAPI('/ip4/127.0.0.1/tcp/5001');
 var router = express.Router();
-var contract = require('./UserAccessControlContract.js')
 var config = require('config');
+console.log("Environment is:" + config.get('env') );
+
+if(config.get('env') == "prod" )
+{
+  var contract = require('./UserAccessControlContract.js')
+}
+else{
+ var contract = require('./UserAccessControlContractqa.js') 
+}
+
+
 
 //Simple implementation of logging to both console and log file by overwriting the console.log function.
 //For production implementation, use Winston.
@@ -121,7 +131,7 @@ app.post('/register',jsonparser,function(req,res){
 
           if(err){
             console.log(err)
-            res.status(500).send(err.toString());            
+            res.status(500).send({error: err.toString()});            
           }
           else
           {
@@ -131,7 +141,7 @@ app.post('/register',jsonparser,function(req,res){
             {
                 console.log(error.toString())
                 loggedEvent.stopWatching();
-                res.status(500).send(error.toString());
+                res.status(500).send({error: error.toString()});
                
             }
             else
@@ -142,7 +152,7 @@ app.post('/register',jsonparser,function(req,res){
               }
               else{
                 loggedEvent.stopWatching();
-                res.status(400).send("Registration Failed");
+                res.status(400).send({error: "Registration Failed"});
               }
             }
             })
@@ -186,7 +196,7 @@ app.post('/login',jsonparser,function(req,res,next){
           contractInstance.Login.sendTransaction(username, password,senderAddress,transactionObject, function(err,result){
           if(err){
             console.log(err)
-            res.status(500).send(err.toString());
+            res.status(500).send({error: err.toString()});
           }
           else
           {
@@ -194,7 +204,7 @@ app.post('/login',jsonparser,function(req,res,next){
             loggedEvent.watch(function(error, result) {            
             if (error) {
                 console.log(error.toString())
-                res.status(500).send(error.toString());
+                res.status(500).send({error: error.toString()});
 
             }
             else
@@ -213,7 +223,7 @@ app.post('/login',jsonparser,function(req,res,next){
                   console.log("Authentication failes:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                
                   if(result.args.userAddress == senderAddress){
                     loggedEvent.stopWatching();                
-                    res.status(401).send("Authencation failed");
+                    res.status(401).send({error: "Authencation failed"});
                   }
                 }
               }                
@@ -238,7 +248,7 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
     if (err) {
        // res.end(err.toString())       
        console.log("Upload file error to IPFS:" + err);
-       res.status(500).send(err); 
+       res.status(500).send({error: err}); 
     }
 
     console.log("successfully uploaded the file to IPFS");
@@ -259,7 +269,7 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
         contractInstance.UploadFile.sendTransaction(fileHash,fileName,transactionObject, function(err,result){
         if(err){
             console.log(err)
-            res.status(500).send(err.toString());
+            res.status(500).send({error: err.toString()});
         }
         else
         {
@@ -271,7 +281,7 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
               }
               else{
                 loggedEvent.stopWatching();
-                res.status(500).send("Error Uploading File");
+                res.status(500).send({error: "Error Uploading File"});
               }
             });
         }
@@ -283,7 +293,7 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
   }
   catch (ex){
     console.log("Upload file error:" + ex);
-    res.status(500).send(ex); 
+    res.status(500).send({error: ex}); 
   }
   
 });
@@ -308,7 +318,7 @@ var filePath = path.join(__dirname, 'downloads',filename);
 
   if (err) {
      console.log(err.toString());
-     res.status(500).send(err.toString());     
+     res.status(500).send({error: err.toString()});     
   }
   var mimetype = mime.lookup(filePath);
   var writedoc = fs.createWriteStream(filePath,{'flags':'a'});
@@ -324,7 +334,7 @@ var filePath = path.join(__dirname, 'downloads',filename);
   stream.on('error', function (err) {
     fs.unlinkSync(filePath);
     console.error('Error downloading file', err)
-    res.status(500).send(err.toString());    
+    res.status(500).send({error: err.toString()});    
   })
 
   stream.on('end', function () {
@@ -356,7 +366,7 @@ app.get('/share/GetProviders',function(req,res)
     res.status(400).send({error: "No providers registered"});
   }
 });
-
+/*
 app.get('/ResetContract',function(req,res)
 {
 
@@ -375,7 +385,7 @@ app.get('/ResetContract',function(req,res)
 
         if(err){
           console.log("reset failed:" + err);
-          res.status(500).send(err.toString()); 
+          res.status(500).send({error: err.toString()}); 
         }
         else{
           
@@ -391,13 +401,14 @@ app.get('/ResetContract',function(req,res)
           }
 
           console.log("Reset is triggerred");
-          res.status(200).send("Reset is triggerred");
+          res.status(200).send({Info: "Reset is triggerred"});
         }
       });
   });  
 
 });
 
+/*
 app.get('/share/GetAllFiles',jsonparser,function(req,res)
 {
 	var address = req.query.address;
@@ -460,9 +471,10 @@ app.get('/share/GetAllFiles',jsonparser,function(req,res)
 	res.json({UploadedFiles:fileArr});
 	
 });
+*/
 
 
-app.get('/share/GetAllFiles2',jsonparser,function(req,res)
+app.get('/share/GetAllFiles',jsonparser,function(req,res)
 {
   try{
 
@@ -480,7 +492,7 @@ app.get('/share/GetAllFiles2',jsonparser,function(req,res)
         
       var uploadedFileCount = contractInstance.getUserFileCount.call(address);
       console.log("uploadedFileCount" + uploadedFileCount);
-a
+
       for(var i=0; i<uploadedFileCount;i++)
       {
         var uploadedFiles = contractInstance.getFileDetails.call(fileIndex,address);              
@@ -529,7 +541,7 @@ a
   }
   catch (ex){
     console.log ("Exception in Getfiles2 method:" + ex);
-    res.status(500).send(ex); 
+    res.status(500).send({error: ex}); 
   }
   
 });
@@ -577,7 +589,7 @@ app.get('/Provider/GetFiles',jsonparser,function(req,res)
   }
   catch (ex){
     console.log ("Exception in Getfiles method:" + ex);
-    res.status(500).send(ex); 
+    res.status(500).send({error: ex}); 
   }
 
 });
@@ -629,7 +641,7 @@ app.post('/share',jsonparser,function(req,res){
 
           if(err){
             console.log(err)
-            res.status(500).send(err.toString()); 
+            res.status(500).send({error: err.toString()}); 
           }
           else
           {
@@ -637,7 +649,7 @@ app.post('/share',jsonparser,function(req,res){
             loggedEvent.watch(function(error, result) {
             if (error) {
               console.log(error.toString())
-              res.status(500).send(error.toString()); 
+              res.status(500).send({error: error.toString()}); 
             }
             else
             {
@@ -647,7 +659,7 @@ app.post('/share',jsonparser,function(req,res){
               }
               else{
                 loggedEvent.stopWatching();
-                res.status(500).send("Returns no filename from contract");                
+                res.status(500).send({error: "Returns no filename from contract"});                
               }
               
             }
@@ -659,7 +671,7 @@ app.post('/share',jsonparser,function(req,res){
       })
 });
 
-/*
+
 app.post('/delete',jsonparser,function(req,res){
 
       var ownerAddress = req.body.address;
@@ -680,7 +692,7 @@ app.post('/delete',jsonparser,function(req,res){
 
           if(err){
             console.log(err)
-            res.status(500).send(err.toString()); 
+            res.status(500).send({error: err.toString()}); 
           }
           else
           {
@@ -688,7 +700,7 @@ app.post('/delete',jsonparser,function(req,res){
             loggedEvent.watch(function(error, result) {
             if (error) {
               console.log(error.toString())
-              res.status(500).send(error.toString()); 
+              res.status(500).send({error: error.toString()}); 
             }
             else
             {
@@ -700,7 +712,7 @@ app.post('/delete',jsonparser,function(req,res){
               else{
                 loggedEvent.stopWatching();
                 console.log("error deleting")
-                res.status(400).send("Error Deleting file.");                 
+                res.status(400).send({error: "Error Deleting file."});                 
               }
               
             }
@@ -711,7 +723,7 @@ app.post('/delete',jsonparser,function(req,res){
         })
       })
 });
-*/
+
 
 app.post('/revoke',jsonparser,function(req,res){
 
@@ -736,7 +748,7 @@ app.post('/revoke',jsonparser,function(req,res){
           if(err){
             console.log(err)
             //res.json({error:err})            
-            res.status(500).send(err.toString());
+            res.status(500).send({error: err.toString()});
           }
           else
           {
@@ -746,7 +758,7 @@ app.post('/revoke',jsonparser,function(req,res){
               console.log("Fileaccessrovoked >> Watch the loggedEvent");
               if (error) {
                 console.log(error.toString());
-                res.status(500).send(error.toString());
+                res.status(500).send({error: error.toString()});
               }
               else
               {                
@@ -757,7 +769,7 @@ app.post('/revoke',jsonparser,function(req,res){
                 else{
                   loggedEvent.stopWatching();
                   console.log("There are no files to revoke access");
-                  res.status(500).send("Error revoking file access.");
+                  res.status(500).send({error: "Error revoking file access."});
                 }                
               }
 
@@ -768,7 +780,7 @@ app.post('/revoke',jsonparser,function(req,res){
       })
 });
 
-app.listen(7000, function () {
+app.listen(config.get('port'), function () {
 
-console.log('Node server started!')
+console.log(config.get('env') + 'Node server started!')
 })

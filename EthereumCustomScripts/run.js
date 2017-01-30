@@ -20,17 +20,9 @@ checkWork();
 
 console.log("Unlock all accounts");
 var unlocked = personal.unlockAccount(eth.accounts[0], "password",-1);
-personal.unlockAccount(eth.accounts[1], "password",-1);
-personal.unlockAccount(eth.accounts[2], "password",-1);
-personal.unlockAccount(eth.accounts[3], "password",-1);
-personal.unlockAccount(eth.accounts[4], "password",-1);
-personal.unlockAccount(eth.accounts[5], "password",-1);
-personal.unlockAccount(eth.accounts[6], "password",-1);
-personal.unlockAccount(eth.accounts[7], "password",-1);
-personal.unlockAccount(eth.accounts[8], "password",-1);
-personal.unlockAccount(eth.accounts[9], "password",-1);
-personal.unlockAccount(eth.accounts[10], "password",-1);
-
+for (var i = 1; i < 51; i++) {
+	personal.unlockAccount(eth.accounts[i], "password",-1);
+};
 
 console.log("mine once all pending transactions");
 eth.pendingTransactions;

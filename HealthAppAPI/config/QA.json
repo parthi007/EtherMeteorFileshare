@@ -1,0 +1,6 @@
+{
+	"contractaddress": "0x79b7f04a76cdf1ab131692c8f447a0fdc4ddd481",
+	"env": "QA",
+	"logpath":"/home/node1_admin/Desktop/HealthAppAPI/logs/debugQA.log",
+	"port": "7001"
+}
