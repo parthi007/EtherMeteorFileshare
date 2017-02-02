@@ -1,7 +1,7 @@
 pragma solidity ^0.4.0;
 contract UserAccessControlContract {
 
-	enum Roles {None,Admin,Participant,Provider} 
+	enum Roles {None,Admin,Participant,Provider,Auditor} 
 	
 	struct UserAccount{
 		address userAddress;
@@ -32,10 +32,11 @@ contract UserAccessControlContract {
 		bool addressUsed;
 	}
 
-   	event FileUploaded (string fileName,bool uploaded);
+   	event FileUploaded (string fileName,bool uploaded,address indexed participantAddress, string participantName);
+   	event FileDownloaded(string fileName, uint fileId);
 	event UserAccountAdded (bool registered);
-	event UserAuthenticated(bool authenticated,string username, uint roleCd, address userAddress);
-	event FileShared(string FileName, string userName, uint fileId);
+	event UserAuthenticated(bool authenticated,string username, uint roleCd,address indexed userAddress);
+	event FileShared(string FileName, string userName, uint fileId, address indexed participantAddress, address indexed providerAddress);
 	event FileAccessRevoked(string fileName, string providerName);
 	event FileDeleted(bool deleted);
 	event AddressAdded(bool added);
@@ -53,11 +54,33 @@ contract UserAccessControlContract {
 
 	Roles public role;
 
+    
 	function UserAccessControlContract(string username, string password) {
 		users[msg.sender] = UserAccount(msg.sender, username, password, Roles.Admin);
 		useraccounts[numUsers] = users[msg.sender];
 		numUsers++;
 	}
+	
+	modifier require(bool _condition) {
+        if (!_condition) throw;
+        _;
+    }
+
+    modifier onlyAuditor() {
+        if (!IsAuditor(msg.sender)) throw;
+        _;
+    }
+
+    modifier onlyProvider() {
+        if (!IsProvider(msg.sender)) throw;
+        _;
+    }
+
+    modifier onlyParticipant() {
+        if (!IsParticipant(msg.sender)) throw;
+        _;
+    }
+
 
 	function ResetContract(){
 		
@@ -67,7 +90,7 @@ contract UserAccessControlContract {
 		    delete uploadedFiles[i];	
 		}
 		
-		for(i=0;i<numUsers;i++)
+		for(i=1;i<numUsers;i++)
 		{
 		    delete users[useraccounts[i].userAddress];
 		    delete useraccounts[i];
@@ -88,9 +111,6 @@ contract UserAccessControlContract {
 		sharedFileIndex=0;
 		addressCount=0;
 	
-	
-		users[0x922debc000dd9303a3e47be7127498329f598029] = UserAccount(0x922debc000dd9303a3e47be7127498329f598029, "admin", "admin", Roles.Admin);
-		useraccounts[numUsers] = users[0x922debc000dd9303a3e47be7127498329f598029];
 		numUsers++;
 
 	}
@@ -110,6 +130,22 @@ contract UserAccessControlContract {
 		AddressAdded(true);
 		return true;
 	}
+
+	function getFileDetailsForAuditor(uint fileNo, address sender) public 
+	onlyAuditor
+	returns (string uploadedFileDetails)
+	{
+		 
+		for(uint i = 0; i<numFiles;i++)
+		{
+			var OwnerAddress = uploadedFiles[i].userAddress;
+			var contentHash = uploadedFiles[i].fileHash;
+			var filename = uploadedFiles[i].fileName;			
+			uploadedFileDetails =  strConcat(toString(OwnerAddress), filename, contentHash, "||", "");
+		}
+	}
+
+
 
 	function GetAvailableAddresses() public returns (address[50] patientAddress, address[50] providerAddress, uint patAddressCount, uint providerAddressCount)
 	{
@@ -132,6 +168,9 @@ contract UserAccessControlContract {
 			}
 		}
 	}	
+
+
+
 	function Register(string username, string password, Roles roleCode, address nodeAddress) public {
 	
 		if(!CheckIfUserExists(nodeAddress,username))
@@ -164,10 +203,17 @@ contract UserAccessControlContract {
 		}
 	}
 
-	function RemoveFile(uint FileId, address OwnerAddress) public returns (bool)
+
+
+	function RemoveFile(uint FileId, address OwnerAddress) public
+	onlyParticipant
+	returns (bool)
 	{
-	    FileDetails fileToDelete = uploadedFiles[FileId];
+
 		bool deleted = false;
+
+	    FileDetails fileToDelete = uploadedFiles[FileId];
+		
 		address shareOwner;
 
 		if(fileToDelete.userAddress==OwnerAddress)
@@ -250,11 +296,19 @@ contract UserAccessControlContract {
 	}
 	
 	function UploadFile(string fHash, string fileName) public
+	onlyParticipant
 	{
+
 		uploadedFiles[numFiles] = FileDetails(fHash, fileName, msg.sender);
 		numFiles++;
 		bool uploaded = true;
-		FileUploaded (fileName, uploaded);
+		string userName = users[msg.sender].userName;
+		FileUploaded (fileName, uploaded, msg.sender, userName);
+	}
+
+	function DownloadFile(string fileName, uint fileId) public
+	{		
+		FileDownloaded (fileName, fileId);
 	}
 		
 	function getUserFileCount(address sender) public returns (uint fileCount)
@@ -288,14 +342,16 @@ contract UserAccessControlContract {
 		throw;
 	}
 	
-	function ShareFiles(address ownerAddress, address providerAddress, uint FileId, string FileName) public returns(bool)
+	function ShareFiles(address ownerAddress, address providerAddress, uint FileId, string FileName) public
+	onlyParticipant
+	returns(bool)
 	{
 	    	if(CheckOwnership(FileId, ownerAddress) && IsProvider(providerAddress))
 	 	    {
 		       	UserAccount provider = users[providerAddress]; 
 		       	sharedFiles[sharedFileIndex] = SharedFile(FileId, ownerAddress, providerAddress,true);
 				sharedFileIndex++;
-		       	FileShared(FileName,provider.userName, FileId);
+		       	FileShared(FileName,provider.userName, FileId, ownerAddress, providerAddress);
 		       	return true;
 	    	}
 		    else throw;
@@ -335,7 +391,9 @@ contract UserAccessControlContract {
 		throw;
 	}
 	
-	function RevokeFileAccess(address owner, uint fileId, string fileName, address providerAddress) public returns (string, uint, string providerName)
+	function RevokeFileAccess(address owner, uint fileId, string fileName, address providerAddress) public 
+	onlyParticipant
+	returns (string, uint, string providerName)
 	{
 	        if(CheckOwnership(fileId, owner) && IsProvider(providerAddress))
 	 	    {
@@ -432,6 +490,28 @@ contract UserAccessControlContract {
 	    else return false;
 	}
 
+	
+	function IsParticipant(address userAddress) public returns (bool)
+	{
+	    UserAccount participant = users[userAddress];
+	    if(bytes(participant.userName).length >0 && participant.roleCode==Roles.Participant)
+	    {
+	        return true;
+	    }
+	    else return false;
+	}
+
+
+	function IsAuditor(address auditorAddress) public returns (bool)
+	{
+	    UserAccount auditor = users[auditorAddress];
+	    if(bytes(auditor.userName).length >0 && auditor.roleCode==Roles.Auditor)
+	    {
+	        return true;
+	    }
+	    else return false;
+	}
+
 	function stringToBytes32(string memory source) returns (bytes32 result) {
 		assembly {
 		    result := mload(add(source, 32))
@@ -459,6 +539,31 @@ contract UserAccessControlContract {
 				return false;
 		return true;
 	}
+	
+	//utiltiy function to convert address to string
+	function toString(address x) returns (string) {
+        bytes memory b = new bytes(20);
+        for (uint i = 0; i < 20; i++)
+            b[i] = byte(uint8(uint(x) / (2**(8*(19 - i)))));
+        return string(b);
+    }
+    
+    function strConcat(string _a, string _b, string _c, string _d, string _e) internal returns (string){
+        bytes memory _ba = bytes(_a);
+        bytes memory _bb = bytes(_b);
+        bytes memory _bc = bytes(_c);
+        bytes memory _bd = bytes(_d);
+        bytes memory _be = bytes(_e);
+        string memory abcde = new string(_ba.length + _bb.length + _bc.length + _bd.length + _be.length);
+        bytes memory babcde = bytes(abcde);
+        uint k = 0;
+        for (uint i = 0; i < _ba.length; i++) babcde[k++] = _ba[i];
+        for (i = 0; i < _bb.length; i++) babcde[k++] = _bb[i];
+        for (i = 0; i < _bc.length; i++) babcde[k++] = _bc[i];
+        for (i = 0; i < _bd.length; i++) babcde[k++] = _bd[i];
+        for (i = 0; i < _be.length; i++) babcde[k++] = _be[i];
+        return string(babcde);
+    }
 	
     function() {
         throw;

@@ -20,7 +20,7 @@ checkWork();
 
 console.log("Unlock all accounts");
 var unlocked = personal.unlockAccount(eth.accounts[0], "password",-1);
-for (var i = 1; i < 51; i++) {
+for (var i = 1; i < eth.accounts.length; i++) {
 	personal.unlockAccount(eth.accounts[i], "password",-1);
 };
 
