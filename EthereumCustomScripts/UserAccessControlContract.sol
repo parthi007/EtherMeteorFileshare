@@ -14,7 +14,8 @@ contract UserAccessControlContract {
 	{
 		string fileHash;
 		string fileName;
-		address userAddress;	
+		address userAddress;
+		bool isDeleted;	
 	}
 	
 	struct SharedFile
@@ -23,6 +24,7 @@ contract UserAccessControlContract {
 	    address ownerAddress;
 	    address sharedUserAddress;
 	    bool sharedFlg;
+	    string timeStamp;
 	}
 
 	struct RoleAddress
@@ -84,28 +86,6 @@ contract UserAccessControlContract {
 
 	function ResetContract(){
 		
-        //to clear a mapping hashtable in solidity
-        for(uint i=0;i<numFiles;i++)
-		{
-		    delete uploadedFiles[i];	
-		}
-		
-		for(i=1;i<numUsers;i++)
-		{
-		    delete users[useraccounts[i].userAddress];
-		    delete useraccounts[i];
-		}
-        
-        for(i=0;i<sharedFileIndex;i++)
-		{
-		    delete sharedFiles[i];	
-		}
-        
-        for(i=0;i<addressCount;i++)
-		{
-		    delete availAddresses[i];	
-		}
-		
 		numUsers=0;
 		numFiles=0;
 		sharedFileIndex=0;
@@ -135,14 +115,17 @@ contract UserAccessControlContract {
 	onlyAuditor
 	returns (string uploadedFileDetails)
 	{
+		var uploadedFileDetail =  "";
 		 
 		for(uint i = 0; i<numFiles;i++)
 		{
 			var OwnerAddress = uploadedFiles[i].userAddress;
 			var contentHash = uploadedFiles[i].fileHash;
 			var filename = uploadedFiles[i].fileName;			
-			uploadedFileDetails =  strConcat(toString(OwnerAddress), filename, contentHash, "||", "");
+			uploadedFileDetail =  strConcat(toString(OwnerAddress), filename, contentHash, "||", "");
 		}
+
+		return uploadedFileDetail;
 	}
 
 
@@ -236,6 +219,7 @@ contract UserAccessControlContract {
 				}
 			}
             uploadedFiles[FileId].userAddress=0x0000000000000000000000000000000000000000;            
+            uploadedFiles[FileId].isDeleted = true;
             deleted = true;
 		    FileDeleted(deleted); 
 		    return deleted;
@@ -299,7 +283,7 @@ contract UserAccessControlContract {
 	onlyParticipant
 	{
 
-		uploadedFiles[numFiles] = FileDetails(fHash, fileName, msg.sender);
+		uploadedFiles[numFiles] = FileDetails(fHash, fileName, msg.sender,false);
 		numFiles++;
 		bool uploaded = true;
 		string userName = users[msg.sender].userName;
@@ -317,7 +301,7 @@ contract UserAccessControlContract {
 		for(uint fileIndex = 0; fileIndex<numFiles;fileIndex++)
 		{
 			OwnerAddress = uploadedFiles[fileIndex].userAddress;
-			if(OwnerAddress == sender)
+			if(OwnerAddress == sender && !uploadedFiles[fileIndex].isDeleted)
 			{
 				fileCount++;
 			}
@@ -331,7 +315,7 @@ contract UserAccessControlContract {
 		for(uint i = fileNo; i<numFiles;i++)
 		{
 			OwnerAddress = uploadedFiles[i].userAddress;
-			if(OwnerAddress == sender)
+			if(OwnerAddress == sender && !uploadedFiles[i].isDeleted)
 			{
 				contentHash = uploadedFiles[i].fileHash;
 				filename = uploadedFiles[i].fileName;
@@ -342,14 +326,14 @@ contract UserAccessControlContract {
 		throw;
 	}
 	
-	function ShareFiles(address ownerAddress, address providerAddress, uint FileId, string FileName) public
+	function ShareFiles(address ownerAddress, address providerAddress, uint FileId, string FileName, string timeStamp) public
 	onlyParticipant
 	returns(bool)
 	{
 	    	if(CheckOwnership(FileId, ownerAddress) && IsProvider(providerAddress))
 	 	    {
 		       	UserAccount provider = users[providerAddress]; 
-		       	sharedFiles[sharedFileIndex] = SharedFile(FileId, ownerAddress, providerAddress,true);
+		       	sharedFiles[sharedFileIndex] = SharedFile(FileId, ownerAddress, providerAddress,true, timeStamp);
 				sharedFileIndex++;
 		       	FileShared(FileName,provider.userName, FileId, ownerAddress, providerAddress);
 		       	return true;
@@ -372,7 +356,7 @@ contract UserAccessControlContract {
 	}
 
 
-	function GetUserSharedFiles(uint fileNo,address sender) public returns (uint fileId, uint fileIndex, string fileName, address provider, string providerName)
+	function GetUserSharedFiles(uint fileNo,address sender) public returns (uint fileId, uint fileIndex, string fileName, address provider, string providerName, string timeStamp)
 	{
 		address OwnerAddress;
 		for(uint i = fileNo; i<sharedFileIndex;i++)
@@ -384,8 +368,9 @@ contract UserAccessControlContract {
 				fileName = uploadedFiles[sharedFiles[i].FileId].fileName;
 				provider = sharedFiles[i].sharedUserAddress;
 				providerName = users[sharedFiles[i].sharedUserAddress].userName;
+				timeStamp = sharedFiles[i].timeStamp;
 				fileIndex = i +1;
-				return (fileId,fileIndex, fileName,provider,providerName);
+				return (fileId,fileIndex, fileName,provider,providerName, timeStamp);
 			}
 		}
 		throw;
@@ -402,7 +387,7 @@ contract UserAccessControlContract {
         			SharedFile file = sharedFiles[i];
         			if((file.ownerAddress == owner) && (file.FileId == fileId) && (file.sharedUserAddress==providerAddress) && file.sharedFlg)
         			{
-        				sharedFiles[i] = SharedFile(fileId,owner,providerAddress, false);
+        				sharedFiles[i] = SharedFile(fileId,owner,providerAddress, false,"");
         				//delete sharedFiles[i];
         				providerName = users[providerAddress].userName;
 						FileAccessRevoked(fileName, providerName);
@@ -445,7 +430,7 @@ contract UserAccessControlContract {
 		return providerFileCount;
 	}
 	
-	function GetProviderFiles(address provider, uint nextIndex ) returns (uint fileId, string fileName,string patientName,string FileHash, uint currentIndex)
+	function GetProviderFiles(address provider, uint nextIndex ) returns (uint fileId, string fileName,string patientName,string FileHash, uint currentIndex, string timeStamp)
 	{
 	    address ProviderAddress;
 	    for(uint fileIndex = nextIndex; fileIndex<sharedFileIndex;fileIndex++)
@@ -457,7 +442,7 @@ contract UserAccessControlContract {
 				if(file.userAddress==sharedFiles[fileIndex].ownerAddress)
 				{
 				    currentIndex = fileIndex;
-				    return(sharedFiles[fileIndex].FileId,file.fileName,users[file.userAddress].userName,file.fileHash,currentIndex);
+				    return(sharedFiles[fileIndex].FileId,file.fileName,users[file.userAddress].userName,file.fileHash,currentIndex, sharedFiles[fileIndex].timeStamp);
 				}
 			}
 		}
@@ -470,7 +455,7 @@ contract UserAccessControlContract {
 	    UserAccount owner = users[ownerAddress];
 	    if(bytes(owner.userName).length >0 && owner.roleCode==Roles.Participant)
 	    {
-	        if(uploadedFiles[FileId].userAddress == ownerAddress)
+	        if((uploadedFiles[FileId].userAddress == ownerAddress) && !uploadedFiles[FileId].isDeleted)
 	        {
 	            return (true);
 	        }

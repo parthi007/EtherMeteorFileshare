@@ -155,6 +155,25 @@ Template['components_admin'].events({
         });
             
         });
+    },
+
+
+        "click #createAddress": function(event, template){ 
+
+        try{
+            var newAccount = web3.personal.newAccount("password");
+            web3.eth.sendTransaction({from: web3.eth.coinbase, to: newAccount, value: web3.toWei(10000, "ether")})
+            web3.personal.unlockAccount(newAccount, "password",-1);
+                
+            TemplateVar.set(template, 'state',{isNewAccountCreated: true,accountAddress:newAccount});        
+        }
+        catch(ex){
+            TemplateVar.set(template, 'state', {isError: true,error:ex});
+        }
+
     }
+
+
+
 
 });

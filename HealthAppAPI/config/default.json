@@ -1,5 +1,6 @@
 {
 	"contractaddress": "0x4300ffc8bc277d15b70971d19f83124ceb91003e",
 	"env": "dev",
-	"logpath":"/home/node1_admin/Desktop/HealthAppAPI/logs/debug.log"
+	"logpath":"/home/node1_admin/Desktop/HealthAppAPI/logs/debug.log",
+	"port": "7000"
 }

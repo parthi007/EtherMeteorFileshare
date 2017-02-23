@@ -11,6 +11,12 @@
                         The error was: "{{error}}".
                     </div>
                 {{/if}}
+
+                {{#if isNewAccountCreated}}
+                    <div class="alert alert-success">
+                        Your new account is created. Account address is {{accountAddressehp}}
+                    </div>
+                {{/if}}
             
                 {{#if isMining}}
                     <div class="alert alert-info">
@@ -113,6 +119,13 @@
                         <button type="button" id="addProvider" style="position: relative;top: 10px;left: 90%;" class="btn btn-info                            btn-deploy">Add Provider Address
                     </button>
                     </div>
+                </div>
+
+                  <div class="form-group">
+                     <div class="col-sm-4">
+                        <button type="button" id="createAddress" style="position: relative;top: 10px;left: 90%;" class="btn btn-info                            btn-deploy">Create New Address
+                    </button>
+                    </div>                   
                 </div>
             </form>
         </div>
