@@ -41,7 +41,7 @@ process.on('uncaughtException', function (err) {
 
 //set defaults:
 var const_gas = 5000000;
-var const_gasMultiplierFactor = 1;
+var const_gasMultiplierFactor = 2;
 
 
 if (typeof web3 !== 'undefined') {
@@ -78,6 +78,9 @@ app.get('/', function (req, res){
 
 app.get('/register',function (req,res){
     var result = contractInstance.GetAvailableAddresses.call();
+
+    console.log("result " + result);
+
     var patient,provider;
       if(result[2] ==0 && result[1][0] ==0)
       {
@@ -125,8 +128,18 @@ app.post('/register',jsonparser,function(req,res){
             gas: const_gas
       };
         web3.eth.estimateGas(transactionObject, function(err, estimateGas){
-        if(!err)          
+        if(!err){          
+          console.log("estimateGas is succes");
           transactionObject.gas = estimateGas * const_gasMultiplierFactor;
+
+        }
+        else
+        {
+          console.log("estimategas error" + err.toString());
+        }
+
+        console.log("transactionObject.gas" + transactionObject.gas);
+
           contractInstance.Register.sendTransaction(username, password,roleCd,senderAddress,transactionObject, function(err,result){
 
           if(err){
@@ -148,6 +161,7 @@ app.post('/register',jsonparser,function(req,res){
               {
                   if(result.args.registered) {
                     loggedEvent.stopWatching();
+                    console.log("Registration is successfully");
                     res.end();
               }
               else{
@@ -179,26 +193,36 @@ app.post('/login',jsonparser,function(req,res,next){
             gas: const_gas
       };
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
+        console.log("estimateGas" + estimateGas + "const_gasMultiplierFactor" + const_gasMultiplierFactor);
       if(!err)
       {
           transactionObject.gas = estimateGas * const_gasMultiplierFactor;
       }
       else
       {
+        console.log("transactionObject.gas"  + transactionObject.gas );
+
         console.log("Login gas error:" + err.toString());
          if(err.toString()=="Error: Out of gas")
          {
             console.log("Inside low gas. Attemping to increase ");
             transactionObject.gas = estimateGas * 100;
          }
-         else(err.toString()=="Error: Exceeds block gas limit")
+         else if (err.toString()=="Error: Exceeds block gas limit")
          {
             transactionObject.gas = estimateGas / 10;
          }
+         else
+         {
+            transactionObject.gas = 5000000000;    
+         }
       }
+
+      
+      
           contractInstance.Login.sendTransaction(username, password,senderAddress,transactionObject, function(err,result){
           if(err){
-            console.log(err)
+            console.log("Transaction failed:" + err)
             res.status(500).send({error: err.toString()});
           }
           else
@@ -277,6 +301,12 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
     if(!err)
     {
         transactionObject.gas = estimateGas * const_gasMultiplierFactor;
+    } 
+    else
+    {
+      console.log("Error computing gas: manual gas")
+      transactionObject.gas = 5000000;
+    }
         contractInstance.UploadFile.sendTransaction(fileHash,fileName,transactionObject, function(err,result){
 
         if(err){
@@ -299,8 +329,8 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
             });
         }
 
-        })
-    }})
+      })
+    })
 
     });
   }

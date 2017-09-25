@@ -9,7 +9,7 @@ function checkWork() {
         miner.start(mining_threads);
     } else {
         miner.stop();
-        console.log("== No transactions! Mining stopped.");
+        //console.log("== No transactions! Mining stopped.");
     }
 }
 
@@ -19,13 +19,14 @@ eth.filter("pending", function(err, block) { checkWork(); });
 checkWork();
 
 console.log("Unlock all accounts");
-var unlocked = personal.unlockAccount(eth.accounts[0], "password",-1);
+var unlocked = personal.unlockAccount(eth.accounts[0], "password",0);
 for (var i = 1; i < eth.accounts.length; i++) {
-	personal.unlockAccount(eth.accounts[i], "password",-1);
+	console.log("unlocking account " + i);	
+	personal.unlockAccount(eth.accounts[i], "password",0);
 };
 
 console.log("mine once all pending transactions");
 eth.pendingTransactions;
 
-miner.start(4);admin.sleepBlocks(1);miner.stop();
+//miner.start(4);admin.sleepBlocks(1);miner.stop();
 

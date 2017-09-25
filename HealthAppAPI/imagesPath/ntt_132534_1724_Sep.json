@@ -1,0 +1,58 @@
+{
+  "Blood Pressure" : {
+    "value1" : "",
+    "unit" : "mmHg",
+    "value2" : "",
+    "identifier" : "Blood Pressure",
+    "image" : "blood_gluco"
+  },
+  "Steps" : {
+    "value1" : "",
+    "unit" : "steps",
+    "value2" : "",
+    "identifier" : "Steps",
+    "image" : "walking"
+  },
+  "Weight" : {
+    "value1" : "",
+    "unit" : "lbs",
+    "value2" : "",
+    "identifier" : "Weight",
+    "image" : "weight"
+  },
+  "Body Mass Index" : {
+    "value1" : "",
+    "unit" : "BMI",
+    "value2" : "",
+    "identifier" : "Body Mass Index",
+    "image" : "bmi"
+  },
+  "Heart Rate" : {
+    "value1" : "",
+    "unit" : "bpm",
+    "value2" : "",
+    "identifier" : "Heart Rate",
+    "image" : "heart_rate"
+  },
+  "Distance" : {
+    "value1" : "",
+    "unit" : "mi",
+    "value2" : "",
+    "identifier" : "Distance",
+    "image" : "walking"
+  },
+  "Active Calories" : {
+    "value1" : "",
+    "unit" : "kcal",
+    "value2" : "",
+    "identifier" : "Active Calories",
+    "image" : "active_cal"
+  },
+  "Blood Glucose" : {
+    "value1" : "",
+    "unit" : "mg\/dL",
+    "value2" : "",
+    "identifier" : "Blood Glucose",
+    "image" : "blood_gluco"
+  }
+}

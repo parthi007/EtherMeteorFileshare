@@ -130,7 +130,7 @@ contract UserAccessControlContract {
 
 
 
-	function GetAvailableAddresses() public returns (address[50] patientAddress, address[50] providerAddress, uint patAddressCount, uint providerAddressCount)
+	function GetAvailableAddresses() public returns (address[200] patientAddress, address[200] providerAddress, uint patAddressCount, uint providerAddressCount)
 	{
 		patAddressCount = 0; 
 		providerAddressCount = 0;
@@ -146,7 +146,7 @@ contract UserAccessControlContract {
 				else if(availAddresses[i].roleCode == Roles.Provider)
 				{
 					providerAddress[providerAddressCount] = availAddresses[i].nodeAddress;
-					providerAddressCount++;																								
+					providerAddressCount++;					
 				}
 			}
 		}
@@ -241,7 +241,7 @@ contract UserAccessControlContract {
 			return false;
 	}
 
-	function GetProviders() public returns(bytes32[50] providers, address[50] provideraddress, uint)
+	function GetProviders() public returns(bytes32[200] providers, address[200] provideraddress, uint)
 	{
 	    uint providerCount;
 	    for(uint count=0; count < numUsers; count++)
