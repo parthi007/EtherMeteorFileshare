@@ -260,23 +260,25 @@ contract UserAccessControlContract {
 	    
 	}
 
-   	function Login(string username, string password, address loginAddress) public {
-		UserAccount user = users[loginAddress];
+	function Login(string username, string password) public {
+					
+		
+		for(uint i = 0; i<numUsers;i++)
+		{
+			string userlogin = useraccounts[i].userName;
+			string userpass = useraccounts[i].password;
+			
+			if(stringsEqual (userlogin, username) && stringsEqual(userpass, password))
+			{
+				role = useraccounts[i].roleCode;
+				UserAuthenticated(true,userlogin,uint(role),useraccounts[i].userAddress);
+				return;
+			}			
+		}
 
-		string userlogin = user.userName;
-		string userpass = user.password;
-		if(stringsEqual (userlogin, username) && stringsEqual(userpass, password))
-		{
-		    role = user.roleCode;
-		    UserAuthenticated(true,userlogin,uint(role),user.userAddress);
-			return;
-		}
-		else
-		{
-			UserAuthenticated(false,username,uint(Roles.None),loginAddress);	
-			return;	
-		}
-	
+		address dummy = 0x0000000000000000000000000000000000000000;
+		UserAuthenticated(false,username,uint(Roles.None),dummy);              
+		return; 
 	}
 	
 	function UploadFile(string fHash, string fileName) public

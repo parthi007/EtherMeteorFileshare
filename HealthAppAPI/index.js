@@ -181,7 +181,7 @@ app.post('/login',jsonparser,function(req,res,next){
       console.log("Login is called" + Date.now());
       var username = req.body.userName.toLowerCase();
       var password = req.body.password;
-      var senderAddress = req.body.address;
+      var senderAddress = web3.eth.accounts[0];
       var blocknumber = web3.eth.getBlock('latest').number;
 
       console.log("Login parameters,Username:" + username + ",password:" + password + ",senderAddress:" + senderAddress);
@@ -218,9 +218,9 @@ app.post('/login',jsonparser,function(req,res,next){
          }
       }
 
+      console.log("Login transaction to be called")
       
-      
-          contractInstance.Login.sendTransaction(username, password,senderAddress,transactionObject, function(err,result){
+          contractInstance.Login.sendTransaction(username, password,transactionObject, function(err,result){
           if(err){
             console.log("Transaction failed:" + err)
             res.status(500).send({error: err.toString()});
@@ -231,7 +231,7 @@ app.post('/login',jsonparser,function(req,res,next){
             loggedEvent.watch(function(error, result) {            
             console.log("login watch event received ");
             if (error) {
-                console.log(error.toString())
+                console.log("errro" + error.toString())
                 res.status(500).send({error: error.toString()});
 
             }
@@ -240,13 +240,11 @@ app.post('/login',jsonparser,function(req,res,next){
               console.log("login watch event received without error ");
               if(result.blockNumber > blocknumber){
                 if(result.args.authenticated) {                                                                
-                  console.log("Authenticated:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                
-                  if(result.args.userAddress == senderAddress)
-                  {
-                    loggedEvent.stopWatching();
-                    res.json({role:result.args.roleCd, address:result.args.userAddress})
-                    res.end()
-                  }
+                  console.log("Authenticated:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                                  
+                  loggedEvent.stopWatching();
+                  res.json({role:result.args.roleCd, address:result.args.userAddress})
+                  res.end()
+                  
                 }
                 else{
                   console.log("Authentication failes:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                

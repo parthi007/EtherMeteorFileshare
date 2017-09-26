@@ -1,0 +1,31 @@
+{
+        "version": "0.2.0",
+        "configurations":             [{
+                "type": "node",
+                "request": "launch",
+                "name": "nodemon",
+                "runtimeExecutable": "nodemon",
+                "program": "${workspaceRoot}/HealthAppAPI/index.js",
+                "restart": true,
+                "console": "integratedTerminal",
+                "internalConsoleOptions": "neverOpen",
+                "env": {
+                    "NODE_ENV": "prod"
+                }
+            },
+            {
+                "type": "node",
+                "request": "attach",
+                "processId": "${command:PickProcess}",
+                "name": "Attach",
+                "port": 7002
+            },            
+            {
+                "type": "node",
+                "request": "attach",
+                "processId": "${command:PickProcess}",
+                "name": "Attach to Process",
+                "port": 7002
+            }
+        ]
+    }
