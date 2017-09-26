@@ -41,13 +41,13 @@ process.on('uncaughtException', function (err) {
 
 //set defaults:
 var const_gas = 5000000;
-var const_gasMultiplierFactor = 1;
+var const_gasMultiplierFactor = 2;
 
 
 if (typeof web3 !== 'undefined') {
   web3 = new Web3(web3.currentProvider);
 } else {
-  web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8001"));
+  web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8002"));
 }
 
 var useraccesscontractaddr = contract.ContractAddress();
@@ -73,28 +73,31 @@ app.use(express.static(__dirname+"/imagesPath"));
 app.use(express.static(__dirname+"/downloads"));
 
 app.get('/', function (req, res){
-	//res.sendFile(path.join(__dirname+'/index.html'))
+  //res.sendFile(path.join(__dirname+'/index.html'))
 })
 
 app.get('/register',function (req,res){
-		var result = contractInstance.GetAvailableAddresses.call();
-		var patient,provider;
-    	if(result[2] ==0 && result[1][0] ==0)
-    	{
-    		res.sendStatus(404);
-    	}
-    	else
-    	{
-  	    if(result[2] > 0)
-  			{
-  				patient = result[0][0];
-  			}
-  			if(result[3] > 0)
-  			{
-  				provider = result[1][0];
-  			}        
-    		res.json({patientAddress:patient, providerAddress:provider});
-    	}
+    var result = contractInstance.GetAvailableAddresses.call();
+
+    console.log("result " + result);
+
+    var patient,provider;
+      if(result[2] ==0 && result[1][0] ==0)
+      {
+        res.sendStatus(404);
+      }
+      else
+      {
+        if(result[2] > 0)
+        {
+          patient = result[0][0];
+        }
+        if(result[3] > 0)
+        {
+          provider = result[1][0];
+        }        
+        res.json({patientAddress:patient, providerAddress:provider});
+      }
 });
 
 app.get('/loginlogs',function (req,res){
@@ -125,8 +128,18 @@ app.post('/register',jsonparser,function(req,res){
             gas: const_gas
       };
         web3.eth.estimateGas(transactionObject, function(err, estimateGas){
-        if(!err)          
+        if(!err){          
+          console.log("estimateGas is succes");
           transactionObject.gas = estimateGas * const_gasMultiplierFactor;
+
+        }
+        else
+        {
+          console.log("estimategas error" + err.toString());
+        }
+
+        console.log("transactionObject.gas" + transactionObject.gas);
+
           contractInstance.Register.sendTransaction(username, password,roleCd,senderAddress,transactionObject, function(err,result){
 
           if(err){
@@ -148,6 +161,7 @@ app.post('/register',jsonparser,function(req,res){
               {
                   if(result.args.registered) {
                     loggedEvent.stopWatching();
+                    console.log("Registration is successfully");
                     res.end();
               }
               else{
@@ -167,7 +181,7 @@ app.post('/login',jsonparser,function(req,res,next){
       console.log("Login is called" + Date.now());
       var username = req.body.userName.toLowerCase();
       var password = req.body.password;
-      var senderAddress = req.body.address;
+      var senderAddress = web3.eth.accounts[0];
       var blocknumber = web3.eth.getBlock('latest').number;
 
       console.log("Login parameters,Username:" + username + ",password:" + password + ",senderAddress:" + senderAddress);
@@ -179,26 +193,36 @@ app.post('/login',jsonparser,function(req,res,next){
             gas: const_gas
       };
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
+        console.log("estimateGas" + estimateGas + "const_gasMultiplierFactor" + const_gasMultiplierFactor);
       if(!err)
       {
           transactionObject.gas = estimateGas * const_gasMultiplierFactor;
       }
       else
       {
+        console.log("transactionObject.gas"  + transactionObject.gas );
+
         console.log("Login gas error:" + err.toString());
          if(err.toString()=="Error: Out of gas")
          {
             console.log("Inside low gas. Attemping to increase ");
             transactionObject.gas = estimateGas * 100;
          }
-         else(err.toString()=="Error: Exceeds block gas limit")
+         else if (err.toString()=="Error: Exceeds block gas limit")
          {
             transactionObject.gas = estimateGas / 10;
          }
+         else
+         {
+            transactionObject.gas = 5000000000;    
+         }
       }
-          contractInstance.Login.sendTransaction(username, password,senderAddress,transactionObject, function(err,result){
+
+      console.log("Login transaction to be called")
+      
+          contractInstance.Login.sendTransaction(username, password,transactionObject, function(err,result){
           if(err){
-            console.log(err)
+            console.log("Transaction failed:" + err)
             res.status(500).send({error: err.toString()});
           }
           else
@@ -207,7 +231,7 @@ app.post('/login',jsonparser,function(req,res,next){
             loggedEvent.watch(function(error, result) {            
             console.log("login watch event received ");
             if (error) {
-                console.log(error.toString())
+                console.log("errro" + error.toString())
                 res.status(500).send({error: error.toString()});
 
             }
@@ -216,13 +240,11 @@ app.post('/login',jsonparser,function(req,res,next){
               console.log("login watch event received without error ");
               if(result.blockNumber > blocknumber){
                 if(result.args.authenticated) {                                                                
-                  console.log("Authenticated:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                
-                  if(result.args.userAddress == senderAddress)
-                  {
-                    loggedEvent.stopWatching();
-                    res.json({role:result.args.roleCd, address:result.args.userAddress})
-                    res.end()
-                  }
+                  console.log("Authenticated:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                                  
+                  loggedEvent.stopWatching();
+                  res.json({role:result.args.roleCd, address:result.args.userAddress})
+                  res.end()
+                  
                 }
                 else{
                   console.log("Authentication failes:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                
@@ -277,6 +299,12 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
     if(!err)
     {
         transactionObject.gas = estimateGas * const_gasMultiplierFactor;
+    } 
+    else
+    {
+      console.log("Error computing gas: manual gas")
+      transactionObject.gas = 5000000;
+    }
         contractInstance.UploadFile.sendTransaction(fileHash,fileName,transactionObject, function(err,result){
 
         if(err){
@@ -299,8 +327,8 @@ app.post('/upload',upload.single('uploadfile'),function (req,res) {
             });
         }
 
-        })
-    }})
+      })
+    })
 
     });
   }
@@ -396,19 +424,19 @@ var filePath = path.join(__dirname, 'downloads',filename);
 app.get('/share/GetProviders',function(req,res)
 {
 
-	var result = contractInstance.GetProviders.call();
-	var providerArr = new Array();
+  var result = contractInstance.GetProviders.call();
+  var providerArr = new Array();
   var provider;
-	if(result[2] >0)
-	{
-		for(var i =0;i<result[2];i++)
-		{
-			provider = {providerName: web3.toAscii(result[0][i]).replace(/\u0000/g, ''), providerAddress:result[1][i]};	
-			providerArr.push(provider);
-		}
-		res.json({providers: providerArr});
-	}
-	else
+  if(result[2] >0)
+  {
+    for(var i =0;i<result[2];i++)
+    {
+      provider = {providerName: web3.toAscii(result[0][i]).replace(/\u0000/g, ''), providerAddress:result[1][i]}; 
+      providerArr.push(provider);
+    }
+    res.json({providers: providerArr});
+  }
+  else
   {
     res.status(400).send({error: "No providers registered"});
   }
@@ -492,65 +520,65 @@ app.get('/ResetContract',function(req,res)
 /*
 app.get('/share/GetAllFiles',jsonparser,function(req,res)
 {
-	var address = req.query.address;
-	var fileIndex = 0;
-	var sharedFileIndex = 0;
-	var filecontent,fileName;
-	var fileArr = new Array();
-	var fileInfo;
-	var sharedProviderAddr;
-	var sharedFileArr = new Array();
-	var FileId = 0;
-	var sharedFileInfo;
-  	
-	var uploadedFileCount = contractInstance.getUserFileCount.call(address);
-	console.log("uploadedFileCount" + uploadedFileCount);
-
-	for(var i=0; i<uploadedFileCount;i++)
-	{
-		var uploadedFiles = contractInstance.getFileDetails.call(fileIndex,address);					    
-		fileIndex = uploadedFiles[0];
-		filecontent = uploadedFiles[1];
-		fileName = uploadedFiles[2];
-		fileInfo = {id:fileIndex-1, hash:filecontent, name:fileName, provider:"", providerAddress:""};
-		fileArr.push(fileInfo);
-	}
-	
-	var sharedFileCount = contractInstance.GetSharedFileCount.call(address);
-  console.log("sharedFileCount" + sharedFileCount);
-	for(var i=0; i<sharedFileCount;i++)
-	{
-		var sharedFiles = contractInstance.GetUserSharedFiles.call(sharedFileIndex,address);	
-    console.log("shared file details" + sharedFiles);				
-		FileId = sharedFiles[0];
-		sharedFileIndex = sharedFiles[1];
-		fileName = sharedFiles[2];
-		sharedProviderAddr = sharedFiles[3];
-		sharedProvider = sharedFiles[4];
-		sharedFileInfo = {id:FileId, name:fileName, provider:sharedProvider, providerAddr: sharedProviderAddr};
-		sharedFileArr.push(sharedFileInfo);	
-	}
-
-
-	for(var count=0;count<fileArr.length;count++)
-	{
+  var address = req.query.address;
+  var fileIndex = 0;
+  var sharedFileIndex = 0;
+  var filecontent,fileName;
+  var fileArr = new Array();
+  var fileInfo;
+  var sharedProviderAddr;
+  var sharedFileArr = new Array();
+  var FileId = 0;
+  var sharedFileInfo;
     
-		for(var scount=0;scount<sharedFileArr.length;scount++)
-		{
+  var uploadedFileCount = contractInstance.getUserFileCount.call(address);
+  console.log("uploadedFileCount" + uploadedFileCount);
+
+  for(var i=0; i<uploadedFileCount;i++)
+  {
+    var uploadedFiles = contractInstance.getFileDetails.call(fileIndex,address);              
+    fileIndex = uploadedFiles[0];
+    filecontent = uploadedFiles[1];
+    fileName = uploadedFiles[2];
+    fileInfo = {id:fileIndex-1, hash:filecontent, name:fileName, provider:"", providerAddress:""};
+    fileArr.push(fileInfo);
+  }
+  
+  var sharedFileCount = contractInstance.GetSharedFileCount.call(address);
+  console.log("sharedFileCount" + sharedFileCount);
+  for(var i=0; i<sharedFileCount;i++)
+  {
+    var sharedFiles = contractInstance.GetUserSharedFiles.call(sharedFileIndex,address);  
+    console.log("shared file details" + sharedFiles);       
+    FileId = sharedFiles[0];
+    sharedFileIndex = sharedFiles[1];
+    fileName = sharedFiles[2];
+    sharedProviderAddr = sharedFiles[3];
+    sharedProvider = sharedFiles[4];
+    sharedFileInfo = {id:FileId, name:fileName, provider:sharedProvider, providerAddr: sharedProviderAddr};
+    sharedFileArr.push(sharedFileInfo); 
+  }
+
+
+  for(var count=0;count<fileArr.length;count++)
+  {
+    
+    for(var scount=0;scount<sharedFileArr.length;scount++)
+    {
       console.log("Filelist name " + fileArr[count].name);
       console.log("shared Filelist name " + sharedFileArr[scount].name);
       console.log("sharedFileArr[scount].providerAddr " + sharedFileArr[scount].providerAddr);
       
-			if(fileArr[count].id==sharedFileArr[scount].id && fileArr[count].name==sharedFileArr[scount].name)
-			{
-				fileArr[count].providerAddress = sharedFileArr[scount].providerAddr;
-				fileArr[count].provider = sharedFileArr[scount].provider;
-			}
-		}
-	}
+      if(fileArr[count].id==sharedFileArr[scount].id && fileArr[count].name==sharedFileArr[scount].name)
+      {
+        fileArr[count].providerAddress = sharedFileArr[scount].providerAddr;
+        fileArr[count].provider = sharedFileArr[scount].provider;
+      }
+    }
+  }
 
-	res.json({UploadedFiles:fileArr});
-	
+  res.json({UploadedFiles:fileArr});
+  
 });
 */
 
@@ -595,7 +623,8 @@ app.get('/share/GetAllFiles',jsonparser,function(req,res)
         fileName = sharedFiles[2];
         sharedProviderAddr = sharedFiles[3];
         sharedProvider = sharedFiles[4];
-        sharedFileInfo = {id:FileId, name:fileName, provider:sharedProvider, providerAddr: sharedProviderAddr};
+        sharedTimeStamp = sharedFiles[5];
+        sharedFileInfo = {id:FileId, name:fileName, provider:sharedProvider, providerAddr: sharedProviderAddr, timeStamp: sharedTimeStamp};
         sharedFileArr.push(sharedFileInfo); 
       }
 
@@ -612,7 +641,7 @@ app.get('/share/GetAllFiles',jsonparser,function(req,res)
           if(fileArr[count].id==sharedFileArr[scount].id && fileArr[count].name==sharedFileArr[scount].name)
           {
             console.log("adding provider for the upload file");
-            providerInfo = {provider:sharedFileArr[scount].provider, providerAddress:sharedFileArr[scount].providerAddr} 
+            providerInfo = {provider:sharedFileArr[scount].provider, providerAddress:sharedFileArr[scount].providerAddr, timeStamp: sharedFileArr[scount].timeStamp} 
             fileArr[count].providerlist.push(providerInfo);            
           }
         }
@@ -632,6 +661,7 @@ app.get('/Provider/GetFiles',jsonparser,function(req,res)
 {
   try
   {
+    console.log ("Provider/GetFiles is called");
     var FileId;
     var FileIndex = 0;
     var fileName,fileHash;
@@ -650,13 +680,14 @@ app.get('/Provider/GetFiles',jsonparser,function(req,res)
       try{
         var result = contractInstance.GetProviderFiles.call(address,FileIndex);
         console.log("Getfiles:" + result);
-        console.log("GetProviderFiles response:" + result[0] + result[1] );
+        console.log("GetProviderFiles response:" + result[0] + result[1] + result[5]);
         FileId = result[0];
         fileName = result[1];
         owner = result[2];
         fileHash = result[3];
         FileIndex = parseInt(result[4])+1;
-        sharedFileInfo = {id:FileId, name:fileName, owner:owner, hash: fileHash};
+        timeStamp = result[5]
+        sharedFileInfo = {id:FileId, name:fileName, owner:owner, hash: fileHash, time: timeStamp };
         sharedFileArr.push(sharedFileInfo);  
       }
       catch (ex){
@@ -707,6 +738,9 @@ app.post('/share',jsonparser,function(req,res){
       var ownerAddress = req.body.address;
       var providerAddress = req.body.providerAddress;
       var fileId = req.body.fileId;
+
+      var dt = new Date();
+      var timeStamp = dt.toUTCString();
       
       var transactionObject = {
             data: bytecode,
@@ -718,7 +752,7 @@ app.post('/share',jsonparser,function(req,res){
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
         if(!err)
           transactionObject.gas = estimateGas * const_gasMultiplierFactor;
-          contractInstance.ShareFiles.sendTransaction(ownerAddress,providerAddress,fileId,fileName,transactionObject, function(err,result){
+          contractInstance.ShareFiles.sendTransaction(ownerAddress,providerAddress,fileId,fileName,timeStamp,transactionObject, function(err,result){
 
           if(err){
             console.log(err)
@@ -823,7 +857,7 @@ app.post('/revoke',jsonparser,function(req,res){
       web3.eth.estimateGas(transactionObject, function(err, estimateGas){
         if(!err)
           transactionObject.gas = estimateGas * const_gasMultiplierFactor;
-      	console.log("RevokeFileaccess is to called");
+        console.log("RevokeFileaccess is to called");
         contractInstance.RevokeFileAccess.sendTransaction(ownerAddress,fileId,fileName,providerAddress,transactionObject, function(err,result){
 
           if(err){
