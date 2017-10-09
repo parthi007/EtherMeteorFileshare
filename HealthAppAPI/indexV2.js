@@ -247,11 +247,9 @@ app.post('/login',jsonparser,function(req,res,next){
                   
                 }
                 else{
-                  console.log("Authentication failes:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                
-                  if(result.args.userAddress == senderAddress){
+                  console.log("Authentication failes:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                                  
                     loggedEvent.stopWatching();                
-                    res.status(401).send({error: "Authencation failed"});
-                  }
+                    res.status(401).send({error: "Authencation failed"});                  
                 }
               }                
             }

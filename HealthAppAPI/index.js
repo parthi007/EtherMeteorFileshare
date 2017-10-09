@@ -239,21 +239,20 @@ app.post('/login',jsonparser,function(req,res,next){
             {
               console.log("login watch event received without error ");
               if(result.blockNumber > blocknumber){
+                console.log("Inside Blocknumber");
                 if(result.args.authenticated) {                                                                
-                  console.log("Authenticated:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                                  
+                  console.log("Authenticated:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);
                   loggedEvent.stopWatching();
-                  res.json({role:result.args.roleCd, address:result.args.userAddress})
-                  res.end()
-                  
+                  res.json({role:result.args.roleCd, address:result.args.userAddress});
+                  res.end();
                 }
                 else{
-                  console.log("Authentication failes:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                
-                  if(result.args.userAddress == senderAddress){
-                    loggedEvent.stopWatching();                
-                    res.status(401).send({error: "Authencation failed"});
-                  }
+                  console.log("Authentication failes:" + result.args.authenticated + result.args.username + result.args.roleCd + result.args.userAddress);                                  
+                  loggedEvent.stopWatching();                
+                  res.status(401).send({error: "Authencation failed"});                  
                 }
-              }                
+              }
+              console.log("issue with blocknumber");
             }
 
             })

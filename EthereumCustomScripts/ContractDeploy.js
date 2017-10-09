@@ -31,7 +31,9 @@ var useraccesscontrolcontract = useraccesscontrolcontract_sol_useraccesscontrolc
     console.log(e, contract);
     if (typeof contract.address !== 'undefined') {
         console.log('Contract mined! address: ' + contract.address + ' transactionHash: ' + contract.transactionHash);
-		AddParticipatingAccounts();    	
+		AddParticipatingAccounts(); 
+		//PauseTransactions();   
+		RegisterAll();	
     	console.log('Contract mined! address: ' + contract.address + ' transactionHash: ' + contract.transactionHash);
     }
  })
@@ -116,4 +118,52 @@ function AddParticipatingAccounts(){
 	//PauseTransactions();
 
 	}
+}
+
+
+function RegisterAll(){
+	console.log('Register Patients');
+	var minpatientAccount = 1
+	var maxpatientaccount = 175
+	var password = "password";
+	for (var i = minpatientAccount; i <= maxpatientaccount; i++) {
+		
+		var username = "patient" + i;		
+		var roleCd = 2;
+		var nodeAddress = web3.eth.accounts[i];
+
+		register(username,	password,roleCd,nodeAddress);		
+	}
+
+	var minproviderAccount = 176
+	var maxprovideraccount = 345
+
+	for (var i = minproviderAccount; i <= maxprovideraccount; i++) {
+		
+		var username = "provider" + i;		
+		var roleCd = 3;
+		var nodeAddress = web3.eth.accounts[i];
+
+		register(username,	password,roleCd,nodeAddress);		
+	}
+}
+
+function register(username,	password,roleCd,nodeAddress){
+
+	console.log("Register" + username + "," + nodeAddress);
+
+	useraccesscontrolcontract.Register.sendTransaction(
+		username,
+		password,
+		roleCd,
+		nodeAddress,
+		{
+			 from: web3.eth.coinbase, 
+			 data: contractdata, 
+			 gas: gaslimit
+		},function (e, contract1){
+		console.log(e, contract1);    
+			 console.log('Registration triggered');    
+	 })
+
 }

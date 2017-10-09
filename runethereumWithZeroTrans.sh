@@ -16,5 +16,3 @@ echo "Starting Ethereum1"
 #geth --identity "DellBCPN2" --rpc --rpcaddr "0.0.0.0" --rpcport "8002" --rpccorsdomain "*" --rpcapi "db,http,eth,net,personal,web3" --port "4003" --gasprice "0"  --maxpeers 5 --nodiscover --networkid 9877 --datadir="/home/node1_admin/blockchaindata/DataDir" --etherbase 0 --unlock 0 --password "/home/node1_admin/data2/customscripts/password.txt"  --preload "/home/node1_admin/Desktop/EthereumCustomScripts/run.js" console
 
 /home/node1_admin/LocalGeth/go-ethereum/build/bin/geth --identity "DellBCPN4" --rpc --rpcaddr "0.0.0.0" --rpcport "8002" --rpccorsdomain "*" --rpcapi "db,http,eth,net,personal,web3" --port "4003" --gasprice "0" --targetgaslimit "500000000000" --maxpeers 5 --nodiscover --networkid 15 --datadir="/home/node1_admin/blockchaindata/DataDir16"  --etherbase 0 --unlock 0 --password "/home/node1_admin/data2/customscripts/password.txt"  --preload "/home/node1_admin/Desktop/EthereumCustomScripts/run.js" console
-
-read press_enter_to_close

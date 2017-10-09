@@ -1,3 +1,12 @@
+Attach to running geth: 
+/home/node1_admin/LocalGeth/go-ethereum/build/bin/geth attach http://:8002
+
+
+
+
+----------------------------
+
+
 Use the command in geth console to execute the scripts.
 
 loadScript('/home/node1_admin/Desktop/EthereumCustomScripts/ContractDeploy.js')
